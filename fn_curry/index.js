@@ -10,12 +10,10 @@
 
 function curry(fn) {
   return function curried(...args) {
-    console.log(args);
-    console.log(fn.length);
+    // console.log(args);
     if (args.length >= fn.length) {
-      return fn.apply(this, args);
+      return fn.apply(this, args)
     } else {
-      // 参数不够，返回新函数继续收集
       return function (...rest) {
         return curried.apply(this, args.concat(rest));
       }
