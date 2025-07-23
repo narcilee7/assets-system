@@ -1,37 +1,73 @@
+// class EventEmitter {
+//   constructor() {
+//     this.cached = {};
+//   }
+
+//   on(event, callback) {
+//     if (!this.cached[event]) {
+//       this.cached[event] = [];
+//     }
+//     this.cached[event].push(callback);
+//   }
+
+//   emit(event, ...args) {
+//     if (this.cached[event]) {
+//       this.cached[event].forEach(callback => callback(...args));
+//     }
+//   }
+
+//   off(event, callback) {
+//     if (!this.cached[event]) return;
+
+//     if (!callback) {
+//       delete this.cached[event];
+//     } else {
+//       this.cached[event] = this.cached[event].filter(cb => cb !== callback);
+//     }
+//   }
+
+//   once(event, callback) {
+//     const wrapper = (...args) => {
+//       callback(...args);
+//       // 调用后自动移除
+//       this.off(event, wrapper); 
+//     }
+//     this.on(event, wrapper);
+//   }
+// }
 class EventEmitter {
   constructor() {
-    this.cached = {};
+    this.cached = {}
   }
 
-  on(event, callback) {
+  on(event, cb) {
     if (!this.cached[event]) {
-      this.cached[event] = [];
+      this.cached[event] = []
     }
-    this.cached[event].push(callback);
+    this.cached[event].push(cb)
   }
 
   emit(event, ...args) {
     if (this.cached[event]) {
-      this.cached[event].forEach(callback => callback(...args));
+      this.cached[event].forEach(cb => cb(...args))
     }
   }
 
-  off(event, callback) {
-    if (!this.cached[event]) return;
+  off(event, cb) {
+    if (!this.cached[event]) return 
 
-    if (!callback) {
-      delete this.cached[event];
+    if (!cb) {
+      delete this.cached[event]
     } else {
-      this.cached[event] = this.cached[event].filter(cb => cb !== callback);
+      this.cached[event] = this.cached[event].filter(callback => cb !== callback)
     }
   }
 
   once(event, callback) {
     const wrapper = (...args) => {
-      callback(...args);
-      // 调用后自动移除
-      this.off(event, wrapper); 
+      callback(...args)
+      this.off(event, wrapper)
     }
-    this.on(event, wrapper);
+    this.on(event, wrapper)
   }
 }
