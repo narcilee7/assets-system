@@ -51,4 +51,4 @@ const data = [
   arguments // 类数组对象
 ]
 
-console.log(flatten(data, 2))
+console.log(flatten(data, Infinity))

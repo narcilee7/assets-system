@@ -21,24 +21,29 @@ function deepCopyJSON(obj) {
  * @param {*} hash 旧weakMap
  * @returns 
  */
-function deepCopy(obj, hash = new WeakMap()) {
-  if (obj === null || typeof obj !== 'object') return obj;
-  if (hash.has(obj)) return hash.get(obj);
+function deepClone(obj, hash = new WeakMap()) {
+  if (obj === null || typeof obj !== 'object') return obj
 
-  const result = Array.isArray(obj) ? [] : {};
+  if (hash.has(obj)) return hash.get(obj)
 
-  hash.set(obj, result);
+  const result = Array.isArray(obj) ? [] : {}
+
+  hash.set(obj, result)
 
   for (const key in obj) {
     if (obj.hasOwnProperty(key)) {
-      result[key] = deepCopy(obj[key], hash);
+      result[key] = deepClone(obj[key], hash)
     }
   }
-  return result;
+
+  return result
 }
 
 const obj = { name: 'Tom' };
 obj.self = obj;
 
-const newObj = deepCopy(obj);
+const newObj = deepClone(obj);
 console.log(newObj); // { name: 'Tom', self: [Circular] }
+
+console.log(obj.toString() === newObj.toString())
+console.log(obj === newObj)

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>粘性定位</title>
+</head>
+<body>
+  <div class="scroll-container">
+    <header class="sticky-header">
+      <h1>粘性定位</h1>
+    </header>
+    <div class="content">
+              <p>向下滚动查看粘性效果...</p>
+        <p>...</p><p>...</p><p>...</p><p>...</p><p>...</p>
+        <p>...</p><p>...</p><p>...</p><p>...</p><p>...</p>
+        <p>...</p><p>...</p><p>...</p><p>...</p><p>...</p>
+        <p>...</p><p>...</p><p>...</p><p>...</p><p>...</p>
+        <p>...</p><p>...</p><p>...</p><p>...</p><p>...</p>
+        <p>...</p><p>...</p><p>...</p><p>...</p><p>...</p>
+        <p>更多内容...</p>
+    </div>
+  </div>
+</body>
+
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .scroll-container {
+    height: 100vh;
+    overflow: scroll;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    background-color: #f8f8f8;
+    padding: 15px;
+    border-bottom: 1px solid #ccc;
+    z-index: 100;
+    text-align: center;
+  }
+
+  .content {
+    padding: 20px;
+    line-height: 1.6;
+  }
+</style>
+</html>

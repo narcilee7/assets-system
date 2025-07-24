@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>圣杯布局(浮动+负外边距)</title>
+</head>
+<body>
+<div class="container holy-grail-layout">
+
+    <div class="left-column">左侧栏 (自适应)</div>
+        <div class="center-column">中间栏 (固定宽度)</div>
+    <div class="right-column">右侧栏 (自适应)</div>
+</div>
+</body>
+  <style>
+    .holy-grail-layout {
+      overflow: hidden; /* 清除浮动 */
+      padding-left: 200px;
+      padding-right: 200px;
+    }
+
+    .center-column {
+      width: 100%;
+      float: left;
+      background-color: lightblue;
+      margin-left: -100%;  /* 将自身拉到最左边 */
+    }
+
+.left-column {
+    width: 200px; /* 左侧栏固定宽度 */
+    float: left;
+    background-color: lightgreen;
+    margin-left: -200px; /* 将左侧栏拉到中间栏的左侧 */
+    position: relative; /* 配合负边距调整位置 */
+    left: -200px; /* 调整到padding-left的位置 */
+}
+
+.right-column {
+    width: 200px; /* 右侧栏固定宽度 */
+    float: right; /* 让它浮动到右边 */
+    background-color: lightgreen;
+    margin-right: -200px; /* 将右侧栏拉到中间栏的右侧 */
+    position: relative;
+    right: -200px; /* 调整到padding-right的位置 */
+}
+
+  .container > div {
+    height: 200px;
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+    line-height: 160px;
+    border: 1px solid #ccc;
+  }
+  </style>
+</html>

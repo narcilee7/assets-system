@@ -8,14 +8,27 @@
  * - 如果够了，执行原函数
  */
 
+// function curry(fn) {
+//   return function curried(...args) {
+//     // console.log(args);
+//     if (args.length >= fn.length) {
+//       return fn.apply(this, args)
+//     } else {
+//       return function (...rest) {
+//         return curried.apply(this, args.concat(rest));
+//       }
+//     }
+//   }
+// }
+
 function curry(fn) {
-  return function curried(...args) {
-    // console.log(args);
+  return function(...args) {
     if (args.length >= fn.length) {
+      // 递归调用，直到参数数量足够
       return fn.apply(this, args)
     } else {
-      return function (...rest) {
-        return curried.apply(this, args.concat(rest));
+      return function(...rest) {
+        return curried.apply(this, args.concat(rest))
       }
     }
   }

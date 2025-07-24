@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>弹跳动画</title>
+</head>
+<body>
+      <div class="spinner-bounce"></div>
+  <div class="spinner-bounce delay-1"></div>
+  <div class="spinner-bounce delay-2"></div>
+</body>
+
+  <style>
+    .spinner-bounce {
+      width: 20px;
+      height: 20px;
+      background-color: #3498db;
+      display: inline-block; /* 允许元素并排展示 */
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+
+.spinner-bounce.delay-1 {
+    animation-delay: -0.32s; /* 延迟动画开始时间，形成错位感 */
+}
+
+.spinner-bounce.delay-2 {
+    animation-delay: -0.16s;
+}
+
+    @keyframes bounce {
+      0%, 80%, 100% {
+        transform: translateY(0);
+      }
+      40% {
+        transform: translateY(-20px);
+      }
+    }
+  </style>
+</html>
