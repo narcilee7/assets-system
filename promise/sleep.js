@@ -1,24 +1,10 @@
-// // function mySetTimeout(callback, delay) {
-// //   return new Promise((resolve, reject) => {
-// //     setTimeout(() => {
-// //       resolve(callback());
-// //     }, delay);
-// //   });
-// // }
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
-// function sleep(callback, delay) {
-//   return new Promise((resolve) => {
-//     setTimeout(() => {
-//       resolve(callback())
-//     }, delay);
-//   })
-// }
-
-function sleep(callback, delay) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(callback())
-    }, delay)
-  })
+const main = async () => {
+    console.log('start')
+    await sleep(1000)
+    // 下面的都会阻塞，直到sleep执行完
+    console.log('end')
 }
 
+main()

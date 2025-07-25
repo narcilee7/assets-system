@@ -1,3 +1,15 @@
+export class TreeNode {
+  value: number
+  left: TreeNode | null
+  right: TreeNode | null
+
+  constructor(value: number) {
+    this.value = value
+    this.left = null
+    this.right = null
+  }
+}
+
 const root = new TreeNode(1);
 root.left = new TreeNode(2);
 root.right = new TreeNode(3);
@@ -10,13 +22,12 @@ root.left.right = new TreeNode(5);
 function preOrderTraversal(root: TreeNode | null): number[] {
   const result: number[] = []
 
-  function traverse(node: TreeNode | null) {
+  const traverse = (node: TreeNode | null) => {
     if (!node) return
     result.push(node.value)
     traverse(node.left)
     traverse(node.right)
   }
-
   traverse(root)
   return result
 }
@@ -25,16 +36,12 @@ function preOrderTraversalIterative(root: TreeNode | null): number[] {
   if (!root) return []
   const result: number[] = []
   const stack: TreeNode[] = [root]
-
   while (stack.length > 0) {
-    const node = stack.pop()!
-    result.push(node.value)
-
-    // 先右子树入栈，再左子树入栈，保证左子树先被访问
-    if (node.right) stack.push(node.right)
-    if (node.left) stack.push(node.left)
+    const item = stack.pop()!
+    result.push(item.value)
+    if (item.right) stack.push(item.right)
+    if (item.left) stack.push(item.left)
   }
-
   return result
 }
 
@@ -56,21 +63,15 @@ function inOrderTraversalIterative(root: TreeNode | null): number[] {
   const result: number[] = []
   const stack: TreeNode[] = []
   let current = root
-
   while (current || stack.length > 0) {
-    // 将所有的左子树压入栈中
     while (current) {
       stack.push(current)
       current = current.left
     }
-
-    // 访问栈顶元素
     current = stack.pop()!
     result.push(current.value)
-    // 访问右子树
     current = current.right
   }
-
   return result
 }
 

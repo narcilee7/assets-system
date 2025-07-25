@@ -1,21 +1,20 @@
+
 function MyPromiseAll(arr) {
   return new Promise((resolve, reject) => {
     if (!Array.isArray(arr)) {
       reject(new TypeError('Argument must be an array'))
-      return
+      return 
     }
     if (arr.length === 0) {
       resolve([])
       return
     }
-
     let resolveCount = 0
     const result = new Array(arr.length)
-
-    arr.forEach((promise, index) => {
-      Promise.resolve(promise)
+    arr.forEach((p, i) => {
+      Promise.resolve(p)
         .then(v => {
-          result[index] = v
+          result[i] = v
           resolveCount += 1
           if (resolveCount === arr.length) {
             resolve(result)

@@ -55,13 +55,10 @@
       var file = fileInput.files[0];
       if (!file) return;
       if (!fileMd5) return;
-
-
       //获取到文件
       let fileArr = this.sliceFile(file);
       //保存文件名称
       let fileName = file.name;
-
       fileArr.forEach((e, i) => {
         //创建formdata对象
         let data = new FormData();
@@ -72,10 +69,7 @@
         data.append("file", new File([e], fileName));
         upload(data);
       })
-
-
     }
-
     /**
      * 计算文件md5值
      */

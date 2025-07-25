@@ -7,12 +7,16 @@
  * 新对象需要能够访问到构造函数的属性，所以需要重新指定它的原型
  * 构造函数可能会显示返回
  */
-function _new() {
-  const Constructor = arguments[0];
-  const obj = Object.create(Constructor.prototype);
-  const ret = Reflect.construct(Constructor, arguments);
 
-  return typeof ret === 'object' && ret !== null ? ret : obj;
+function _New() {
+  console.log('arguments', arguments)
+  const Constructor = arguments[0]
+  const obj = Object.create(Constructor.prototype)
+  console.log('obj', obj)
+  const ret = Reflect.construct(Constructor, arguments)
+  console.log('ret', ret)
+
+  return typeof ret === 'object' && ret !== null ? ret : obj
 }
 
 class Person {
@@ -25,6 +29,6 @@ class Person {
   }
 }
 
-const person = _new(Person, 'zhangsan');
+const person = _New(Person, 'zhangsan');
 person.sayName(); // zhangsan
 console.log(person); // Person { name: 'zhangsan' }

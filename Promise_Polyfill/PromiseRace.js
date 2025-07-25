@@ -1,31 +1,32 @@
-function PromiseRace(promises) {
+function MyPromiseRace(promises) {
   return new Promise((resolve, reject) => {
     if (!Array.isArray(promises)) {
-      reject(new TypeError("Argument must be an array"));
-      return;
+      reject(new TypeError('Argument must be an array'))
+      return
     }
     if (promises.length === 0) {
-      resolve([]);
-      return;
+      resolve([])
+      return
     }
-    let settled = false;
-      promises.forEach((promise) => {
-        Promise.resolve(promise)
-          .then((value) => {
-            if (!settled) {
-              settled = true;
-              resolve(value);
-            }
-          })
-          .catch((reason) => {
-            if (!settled) {
-              settled = true;
-              reject(reason);
-            }
-          });
-      });
-  });
+    let settled = false
+    promises.forEach(p => {
+      Promise.resolve(p)
+        .then(v => {
+          if (!settled) {
+            settled = true
+            resolve(v)
+          }
+        })
+        .catch(reason => {
+          if (!settled) {
+            settled = true
+            reject(reason)
+          }
+        })
+    })
+  })
 }
+
 
 async function main() {
   const promises = [

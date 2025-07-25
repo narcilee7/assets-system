@@ -3,32 +3,33 @@ class EventEmitter {
     this.cached = {}
   }
 
-  on(event, cb) {
+  on(event, obj) {
     if (!this.cached[event]) {
+      // 初始化
       this.cached[event] = []
     }
-    this.cached[event].push(cb)
+    this.cached[event].push(obj)
   }
-
+  
   emit(event, ...args) {
     if (this.cached[event]) {
-      this.cached[event].forEach(cb => cb(...args))
+      this.cached[event].forEach(obj => obj(...args))
     }
   }
 
-  off(event, cb) {
+  off(event, obj) {
     if (!this.cached[event]) return 
 
-    if (!cb) {
+    if (!obj) {
       delete this.cached[event]
     } else {
-      this.cached[event] = this.cached[event].filter(callback => cb !== callback)
+      this.cached[event] = this.cached[event].filter(callback => obj !== callback)
     }
   }
 
-  once(event, callback) {
+  once(event, obj) {
     const wrapper = (...args) => {
-      callback(...args)
+      obj(...args)
       this.off(event, wrapper)
     }
     this.on(event, wrapper)

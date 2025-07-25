@@ -1,25 +1,56 @@
-function MyPromiseAllSettled(promises) {
+// function MyPromiseAllSettled(promises) {
+//   return new Promise((resolve, reject) => {
+//     if (!Array.isArray(promises)) {
+//       reject(new TypeError('Argument must be an array'));
+//       return;
+//     }
+
+//     if (promises.length === 0) {
+//       resolve([]);
+//       return;
+//     }
+
+//     const results = new Array(promises.length)
+//     let settledCount = 0
+
+//     promises.forEach((promise, index) => {
+//       Promise.resolve(promise)
+//         .then(value => {
+//           results[index] = { status: 'fulfilled', value }
+//         })
+//         .catch(reason => {
+//           results[index] = { status: 'rejected', reason }
+//         })
+//         .finally(() => {
+//           settledCount += 1
+//           if (settledCount === promises.length) {
+//             resolve(results)
+//           }
+//         })
+//     })
+//   })
+// }
+
+function MyPromiseALlSettled(promises) {
   return new Promise((resolve, reject) => {
     if (!Array.isArray(promises)) {
-      reject(new TypeError('Argument must be an array'));
-      return;
+      reject(new TypeError('Argument must be an array'))
+      return
     }
-
     if (promises.length === 0) {
-      resolve([]);
-      return;
+      resolve([])
     }
 
     const results = new Array(promises.length)
     let settledCount = 0
 
-    promises.forEach((promise, index) => {
-      Promise.resolve(promise)
+    promises.forEach((p, idx) => {
+      Promise.resolve(p)
         .then(value => {
-          results[index] = { status: 'fulfilled', value }
+          results[idx] = { status: 'fulfilled', value }
         })
         .catch(reason => {
-          results[index] = { status: 'rejected', reason }
+          results[idx] = { status: 'rejected', reason }
         })
         .finally(() => {
           settledCount += 1
