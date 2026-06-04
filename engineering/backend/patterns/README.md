@@ -6,7 +6,7 @@
 
 | 构件 | 状态 | 关键点 |
 | --- | --- | --- |
-| middleware chain | todo | 洋葱模型、横切逻辑 |
+| middleware chain | tested | 洋葱模型、横切逻辑。含 `compose` + `createTimedPipeline` + 12 组测试 |
 | repository | todo | 数据访问边界 |
 | unit of work | todo | commit / rollback |
 | event bus | todo | 解耦和一致性 |

@@ -22,9 +22,9 @@
 
 | 资产 | 状态 |
 | --- | --- |
-| TCP state machine notes | todo |
-| HTTP versions comparison | todo |
-| TLS handshake walkthrough | todo |
+| TCP deep dive | `docs/tcp.md` |
+| HTTP versions comparison | `docs/http-versions.md` |
+| TLS handshake walkthrough | `docs/tls.md` |
+| network troubleshooting playbook | `docs/troubleshooting.md` |
 | load balancer design notes | todo |
-| network troubleshooting playbook | todo |
 

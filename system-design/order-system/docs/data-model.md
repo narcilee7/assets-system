@@ -1,15 +1,38 @@
 # Data Model
 
-状态：seed。
+## 订单表
 
-## 目标
+```sql
+CREATE TABLE orders (
+    id VARCHAR(64) PRIMARY KEY,
+    user_id VARCHAR(64) NOT NULL,
+    status ENUM('pending','paid','shipped','completed','cancelled','refunded'),
 
-待补充。
+    total_amount DECIMAL(10,2),
+    paid_at TIMESTAMP,
 
-## 关键问题
+    INDEX idx_user (user_id),
+    INDEX idx_status (status)
+);
+```
 
-- 待补充。
+## 订单项表
 
-## 决策与权衡
+```sql
+CREATE TABLE order_items (
+    id VARCHAR(64) PRIMARY KEY,
+    order_id VARCHAR(64),
+    sku_id VARCHAR(64),
+    quantity INT
+);
+```
 
-- 待补充。
+## 库存预占表
+
+```sql
+CREATE TABLE inventory_preorder (
+    sku_id VARCHAR(64),
+    quantity INT,
+    reserved_until TIMESTAMP
+);
+```

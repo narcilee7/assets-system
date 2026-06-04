@@ -1,0 +1,12 @@
+{
+  "name": "@assets/backend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --import tsx $(find . -name '*.test.ts' -not -path './node_modules/*')"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.19.0"
+  }
+}

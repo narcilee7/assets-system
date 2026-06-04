@@ -20,9 +20,9 @@
 
 | 资产 | 状态 |
 | --- | --- |
-| Linux troubleshooting playbook | todo |
-| strace syscall lab | todo |
-| cgroup and namespace notes | todo |
-| file descriptor leak diagnosis | todo |
-| container resource limit lab | todo |
+| Linux troubleshooting playbook | `docs/troubleshooting.md` |
+| strace syscall lab | `docs/strace.md` |
+| cgroup and namespace notes | `docs/cgroup-namespace.md` |
+| file descriptor leak diagnosis | `docs/fd-leak.md` |
+| container resource limit lab | `docs/container-resource.md` |
 

@@ -19,11 +19,12 @@
 
 | 资产 | 状态 | 目标 |
 | --- | --- | --- |
-| timeout budget design | todo | 端到端超时分配 |
-| retry policy design | todo | 分类、退避、抖动 |
-| circuit breaker implementation | todo | closed / open / half-open |
+| retry + timeout + circuit breaker | tested | `stability-patterns/`：退避、超时、熔断状态机、组合顺序 |
+| timeout budget design | todo | 端到端超时分配（链路级） |
 | graceful degradation plan | todo | 降级等级和开关 |
 | failure mode table | todo | 依赖故障推演 |
+| bulkhead / rate limiter | todo | 资源隔离和限流 |
+| graceful shutdown | todo | 安全停止服务 |
 
 ## 追问
 

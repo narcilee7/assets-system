@@ -17,8 +17,7 @@
 
 | 资产 | 状态 | 目标 |
 | --- | --- | --- |
-| transaction boundary playbook | todo | 强一致边界判断 |
-| idempotency key design | todo | request id、状态机、过期 |
+| transaction boundary + idempotency key | tested | `transaction-boundary/`：幂等状态机、冲突策略、TTL、事务边界判断 |
 | outbox pattern | todo | 本地事务 + 事件发布 |
 | saga workflow | todo | step、compensation |
 | reconciliation job | todo | 对账和修复 |

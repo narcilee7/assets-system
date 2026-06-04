@@ -54,13 +54,13 @@
 
 | 优先级 | 资产 | 目录 | 状态 |
 | --- | --- | --- | --- |
-| P0 | layered service blueprint | `architecture-styles/` | todo |
-| P0 | API design checklist | `api-design/` | todo |
-| P0 | transaction boundary playbook | `data-consistency/` | todo |
-| P0 | idempotency key design | `data-consistency/` | todo |
-| P0 | retry / timeout / circuit breaker | `reliability/` | todo |
-| P0 | service observability baseline | `observability/` | todo |
-| P0 | agent tool runtime backend | `ai-backend/` | todo |
+| P0 | middleware pipeline | `patterns/middleware-pipeline/` | tested |
+| P0 | retry / timeout / circuit breaker | `reliability/stability-patterns/` | tested |
+| P0 | transaction boundary + idempotency | `data-consistency/transaction-boundary/` | tested |
+| P0 | service observability baseline | `observability/observability-baseline/` | tested |
+| P1 | layered service blueprint | `architecture-styles/` | todo |
+| P1 | API design checklist | `api-design/` | todo |
+| P1 | agent tool runtime backend | `ai-backend/` | todo |
 | P1 | domain modeling kata | `domain-modeling/` | todo |
 | P1 | outbox + event bus | `data-consistency/` | todo |
 | P1 | capacity estimation worksheet | `scalability/` | todo |
