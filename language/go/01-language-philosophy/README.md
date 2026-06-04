@@ -29,6 +29,7 @@
 | [`pointers.md`](pointers.md) | 指针语法、传递选择、陷阱、逃逸分析 |
 | [`interfaces.md`](interfaces.md) | 隐式实现、内部结构、nil 陷阱、断言 |
 | [`methods.md`](methods.md) | 接收者、方法集、嵌入提升、函数 vs 方法 |
+| [`goroutine-and-channel.md`](goroutine-and-channel.md) | goroutine、channel、select、关闭原则与并发陷阱 |
 
 ---
 
@@ -48,6 +49,7 @@ keywords.md
     → methods.md
       → interfaces.md
         → value-vs-reference.md
+          → goroutine-and-channel.md
 ```
 
 ### 深度理解（完整）
