@@ -16,7 +16,7 @@
 | 推荐系统 | `recommendation/` | todo | 召回、排序、特征、反馈 |
 | Feed 流 | `feed/` | todo | 推 / 拉、分页、去重、排序 |
 | 短链系统 | `short-url/` | todo | ID 生成、跳转、统计、防滥用 |
-| 限流系统 | `rate-limiter/` | todo | token bucket、分布式限流 |
+| 限流系统 | `rate-limiter/` | draft | token bucket、分布式限流 |
 | Agent 平台 | `agent-platform/` | todo | tool、memory、workflow、eval、权限 |
 | 分布式 ID | `distributed-id/` | todo | 雪花算法、号段模式、趋势递增、时钟回拨 |
 | 分布式锁 | `distributed-lock/` | todo | Redis/DB/ZK 实现、看门狗、可重入、红锁 |
