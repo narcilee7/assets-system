@@ -19,9 +19,6 @@ Transformer 是现代 LLM、VLM 和多模态模型的核心结构。
 
 | 资产 | 状态 |
 | --- | --- |
-| attention from scratch | todo |
-| causal mask walkthrough | todo |
-| RoPE notes | todo |
-| transformer block implementation | todo |
-| encoder vs decoder comparison | todo |
-
+| [Attention 机制详解](./attention-mechanism.md) | ✅ |
+| [位置编码详解](./positional-encoding.md) | ✅ |
+| [Transformer 架构详解](./transformer-architecture.md) | ✅ |

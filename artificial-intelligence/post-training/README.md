@@ -19,12 +19,9 @@ Post-training 是把基础模型变成可用助手、工具调用模型、对齐
 
 | 资产 | 状态 |
 | --- | --- |
-| Post-training playbook | todo |
-| SFT data format notes | todo |
-| RLHF pipeline map | todo |
-| DPO objective walkthrough | todo |
-| reward hacking examples | todo |
-| tool-use post-training | todo |
+| [SFT 详解](./sft.md) | ✅ |
+| [RLHF 详解](./rlhf.md) | ✅ |
+| [DPO 详解](./dpo.md) | ✅ |
 
 ## 追问
 
@@ -33,4 +30,3 @@ Post-training 是把基础模型变成可用助手、工具调用模型、对齐
 - Reward Model 为什么会被 hack？
 - Post-training 会不会损伤基础能力？
 - 工具调用数据应该如何构造？
-

@@ -5,16 +5,17 @@
 | 方向 | 内容 |
 | --- | --- |
 | Linear Algebra | vector、matrix、eigen、SVD |
-| Probability | distribution、Bayes、expectation |
-| Optimization | gradient descent、Adam、regularization |
-| Information Theory | entropy、cross entropy、KL |
-| Statistics | bias-variance、sampling、confidence |
+| Probability | distribution、Bayes、expectation、 sampling |
+| Optimization | gradient descent、Adam、AdamW、regularization、lr schedule |
+| Information Theory | entropy、cross entropy、KL、perplexity |
+| Statistics | bias-variance、sampling、confidence、calibration |
 
 ## 资产
 
 | 资产 | 状态 |
 | --- | --- |
-| cross entropy and KL notes | todo |
-| gradient descent intuition | todo |
-| softmax and temperature | todo |
-
+| [线性代数核心概念](./linear-algebra.md) | ✅ |
+| [概率与统计核心概念](./probability-statistics.md) | ✅ |
+| [优化核心概念](./optimization.md) | ✅ |
+| [信息论核心概念](./information-theory.md) | ✅ |
+| [Softmax 与 Temperature](./softmax-and-temperature.md) | ✅ |

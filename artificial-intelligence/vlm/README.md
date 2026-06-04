@@ -28,11 +28,9 @@ Image
 
 | 资产 | 状态 |
 | --- | --- |
-| VLM system map | todo |
-| CLIP-style contrastive learning | todo |
-| image projector notes | todo |
-| multimodal instruction tuning | todo |
-| VLM evaluation tasks | todo |
+| [Vision Encoder](./vision-encoder.md) | ✅ |
+| [Projector / Adapter](./projector.md) | ✅ |
+| [多模态指令微调](./multimodal-sft.md) | ✅ |
 
 ## 追问
 
@@ -40,4 +38,3 @@ Image
 - 视觉 token 数量如何影响成本？
 - VLM 为什么容易看错细节？
 - OCR、图表、表格为什么是难点？
-
