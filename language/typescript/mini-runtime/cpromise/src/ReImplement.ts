@@ -53,7 +53,7 @@ class DPromise<T = any> {
         val,
         (_val) => {
           queueMicrotask(() => {
-            this.state = PENDING
+            this.state = FULFILLED
             this.value = _val as T
             this.onFulfilledCallbacks.forEach(cb => cb(_val as T))
           })

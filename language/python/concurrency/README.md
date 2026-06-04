@@ -1,22 +1,26 @@
-# 并发与异步层
+# Concurrency
 
-这一层训练线程安全、资源限制、异步调度、取消和超时。它和后端任务调度、SSE、Agent Runtime 都强相关。
+这一层训练 Python 并发模型：线程安全、asyncio、限流、背压。
 
 ## 必会概念
 
-- 线程不等于 CPU 并行，GIL 会影响 CPU 密集任务。
-- I/O 密集任务可以从多线程和 asyncio 中获益。
-- 共享状态需要锁或线程安全队列。
-- asyncio 里的并发来自事件循环协作调度。
-- 生产系统要关注取消、超时、限流和背压。
+- GIL 限制：同一时刻只有一个线程执行 Python 字节码。
+- 多线程适合 I/O 密集型，多进程适合 CPU 密集型。
+- asyncio 是单线程事件循环 + 协程的并发模型。
+- `async`/`await` 语法使异步代码看起来像同步代码。
+- 背压（backpressure）防止生产速度超过消费速度。
+
+## 已有资产
+
+| 资产 | 目录 | 状态 | 目标 |
+|------|------|------|------|
+| 并发基础 | `concurrency/` | seed | 线程安全、asyncio、限流 |
 
 ## 题单
 
-| 题目 | 文件 | 状态 | 关键点 |
-| --- | --- | --- | --- |
-| 手写线程安全计数器 | `safe_counter.py` | todo | `threading.Lock` |
-| 手写生产者消费者 | `producer_consumer.py` | todo | `queue.Queue`、停止信号 |
-| 手写简化线程池 | `thread_pool.py` | todo | worker、任务队列 |
-| 手写 `bounded_gather` | `bounded_gather.py` | todo | `asyncio.Semaphore` |
-| 手写 async retry | `async_retry.py` | todo | await、异常、延迟 |
-| 手写 async rate limiter | `async_rate_limiter.py` | todo | 时间窗口、并发控制 |
+| 题目 | 文件/目录 | 状态 | 关键点 |
+|------|----------|------|--------|
+| 线程安全计数器 | `safe_counter.py` | todo | Lock、atomic、GIL |
+| 生产者消费者 | `producer_consumer.py` | todo | Queue、Condition |
+| bounded_gather | `bounded_gather.py` | todo | 并发限制、信号量 |
+| async retry | `async_retry.py` | todo | 异步重试、指数退避 |
