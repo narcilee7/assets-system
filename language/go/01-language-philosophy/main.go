@@ -55,6 +55,7 @@ func main() {
 	// arrayandslice.DebugNil()
 
 	// gorountine with channel
-	grountinewithchannel.DebugGorountine()
+	// grountinewithchannel.DebugGorountine()
+	grountinewithchannel.DebugGorountineBad()
 	fmt.Print("go language philosophy end\n")
 }
