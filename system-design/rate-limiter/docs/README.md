@@ -1,5 +1,14 @@
-# DOCS
+# Rate Limiter Docs
 
-状态：seed。
+限流系统设计的标准化文档目录。
 
-这个目录已进入体系索引，后续需要补齐目标、范围、资产清单和验证方式。
+| 文档 | 状态 |
+|------|------|
+| problem.md | draft |
+| api.md | draft |
+| data-model.md | draft |
+| read-write.md | draft |
+| failure.md | draft |
+| scale.md | draft |
+| observability.md | draft |
+| interview.md | draft |
