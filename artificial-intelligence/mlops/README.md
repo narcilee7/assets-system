@@ -17,8 +17,5 @@ MLOps 主线关注模型实验、训练、部署、监控和回滚。
 
 | 资产 | 状态 |
 | --- | --- |
-| experiment tracking baseline | todo |
-| dataset versioning notes | todo |
-| model registry workflow | todo |
-| model monitoring dashboard | todo |
-
+| MLOps pipeline design | todo |
+| model monitoring checklist | todo |

@@ -23,7 +23,7 @@
 
 | 资产 | 状态 | 目标 |
 | --- | --- | --- |
-| service observability baseline | todo | log / metric / trace 字段 |
+| service observability baseline | tested | `observability-baseline/`：结构化日志、metrics、trace、health check |
 | SLO worksheet | todo | SLI、SLO、error budget |
 | incident debugging playbook | todo | 从报警到根因 |
 | agent trace schema | todo | model、tool、retrieval spans |

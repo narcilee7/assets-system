@@ -17,8 +17,5 @@
 
 | 资产 | 状态 |
 | --- | --- |
-| pretraining system map | todo |
-| scaling law notes | todo |
-| distributed training strategies | todo |
-| training stability checklist | todo |
-
+| [预训练目标函数](./objectives.md) | ✅ |
+| [分布式训练](./distributed-training.md) | ✅ |

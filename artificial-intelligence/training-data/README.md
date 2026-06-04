@@ -18,8 +18,5 @@
 
 | 资产 | 状态 |
 | --- | --- |
-| data pipeline map | todo |
-| dedup methods notes | todo |
-| synthetic instruction data | todo |
-| benchmark contamination checklist | todo |
-
+| [数据流水线详解](./data-pipeline.md) | ✅ |
+| [合成数据](./synthetic-data.md) | ✅ |

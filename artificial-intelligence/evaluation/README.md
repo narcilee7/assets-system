@@ -16,21 +16,17 @@
 
 ## 方法
 
-- Static benchmark。
-- Human eval。
-- LLM-as-judge。
-- Arena。
-- Golden set regression。
-- Red team evaluation。
-- Online A/B。
+- Static benchmark
+- Human eval
+- LLM-as-judge
+- Arena
+- Golden set regression
+- Red team evaluation
+- Online A/B
 
 ## 资产
 
 | 资产 | 状态 |
 | --- | --- |
-| evaluation methodology | todo |
-| LLM-as-judge rubric | todo |
-| VLM eval map | todo |
-| agent task eval | todo |
-| benchmark contamination checklist | todo |
-
+| [评估基准](./benchmarks.md) | ✅ |
+| [LLM-as-Judge](./llm-as-judge.md) | ✅ |

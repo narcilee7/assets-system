@@ -19,9 +19,6 @@
 
 | 资产 | 状态 |
 | --- | --- |
-| KV cache walkthrough | todo |
-| batching and latency tradeoff | todo |
-| quantization methods comparison | todo |
-| speculative decoding notes | todo |
-| vLLM PagedAttention notes | todo |
-
+| [KV Cache 详解](./kv-cache.md) | ✅ |
+| [量化详解](./quantization.md) | ✅ |
+| [Speculative Decoding](./speculative-decoding.md) | ✅ |

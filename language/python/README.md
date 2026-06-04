@@ -1,130 +1,153 @@
-# Python
+# Python 全栈体系
 
-Python 这条线训练对象模型、协议、装饰器、描述符、asyncio、工程模式和 mini framework。
+这一资产覆盖 Python 从**语言设计哲学**到**解释器底层**，从**对象模型**到**工程实践**的完整知识图谱。
 
-## 定位
-
-它是当前语言层里最接近“资产化”的样板：已经有能力分层、核心题单、实现和测试约定。
+对 AI 全栈工程师来说，Python 的价值在于：数据科学、AI/ML、Agent Runtime、后端服务、自动化工具链。
 
 ---
 
-# Python 手写题体系
+## 体系架构
 
-这套目录不是普通题库，而是按 Python 能力层搭出来的训练系统。目标是用小题复现 Python 生态里的核心抽象：对象模型、协议、装饰器、描述符、并发、工程模式和 mini framework。
+### Part I — 理论体系：广度 + 深度
 
-每道题都按同一个节奏练：
+| 编号 | 目录 | 主题 | 深度 |
+|------|------|------|------|
+| 01 | [`01-language-philosophy/`](01-language-philosophy/) | 设计哲学、GIL、与其他语言对比 | 设计层面 |
+| 02 | [`02-type-system-theory/`](02-type-system-theory/) | 鸭子类型、协议、类型提示、 gradual typing | 类型理论 |
+| 03 | [`03-interpreter-and-runtime/`](03-interpreter-and-runtime/) | CPython 解释器、GIL、内存管理、引用计数 | 解释器底层 |
+| 04 | [`04-concurrency-in-depth/`](04-concurrency-in-depth/) | GIL 影响、线程、进程、asyncio、协程 | 并发深度 |
+| 05 | [`05-standard-library-deep-dive/`](05-standard-library-deep-dive/) | collections、itertools、functools、contextlib | 标准库 |
+| 06 | [`06-packaging-and-toolchain/`](06-packaging-and-toolchain/) | pip、setuptools、pyproject.toml、虚拟环境 | 打包与工具链 |
+| 07 | [`07-engineering-and-design/`](07-engineering-and-design/) | 项目结构、测试、FastAPI、Pydantic、可观测性 | 工程化 |
+| 08 | [`08-advanced-topics/`](08-advanced-topics/) | 元类、描述符、C 扩展、Cython、GIL 绕过 | 高级主题 |
 
-1. 先写清楚题目、输入输出、边界条件。
-2. 手写第一版可运行实现。
-3. 补测试，覆盖正常路径、边界路径和易错点。
-4. 复盘复杂度、Python 机制、工程取舍。
+### Part II — 动手训练场：代码 + 面试
 
-## 目录
+| 层级 | 目录 | 内容 |
+|------|------|------|
+| Runtime Model | [`runtime-model/`](runtime-model/) | 对象模型、名字绑定、引用、拷贝、可变/不可变 |
+| Core Abstractions | [`core-abstractions/`](core-abstractions/) | 迭代器、生成器、装饰器、描述符、闭包 |
+| Type System Gymnastics | [`type-system-gymnastics/`](type-system-gymnastics/) | 类型提示进阶、Protocol、泛型、TypeVar |
+| Concurrency | [`concurrency/`](concurrency/) | 线程安全、asyncio、限流、背压 |
+| Standard Library | [`standard-library/`](standard-library/) | 数据结构、LRU、Trie、Top K、BFS/DFS |
+| Engineering Patterns | [`engineering-patterns/`](engineering-patterns/) | Repository、UoW、Event Bus、DI Container |
+| Mini Runtime | [`mini-runtime/`](mini-runtime/) | mini FastAPI、mini ORM、mini pytest、mini Agent |
+| Tests | [`tests/`](tests/) | 体系级测试与验证 |
 
-| 层级 | 目录 | 能力目标 | 代表题 |
-| --- | --- | --- | --- |
-| 1 | `object_model/` | 名字绑定、引用、可变对象、拷贝、常用容器处理 | `deep_copy`、`flatten`、`chunk`、`group_by` |
-| 2 | `iterators/` | 迭代协议、生成器、惰性计算 | `range`、`enumerate`、`zip`、分页迭代器 |
-| 3 | `decorators/` | 闭包、函数包装、横切逻辑 | `timer`、`retry`、`memoize`、`rate_limit` |
-| 4 | `descriptors/` | 属性访问、描述符、类创建机制 | `property`、`cached_property`、字段校验器 |
-| 5 | `concurrency/` | 线程安全、asyncio、限流、背压 | 安全计数器、生产者消费者、`bounded_gather` |
-| 6 | `engineering_patterns/` | 后端工程抽象和业务边界 | Repository、Unit of Work、Event Bus、DI Container |
-| 7 | `data_structures/` | 常用算法与结构的工程实现 | LRU、Top K、Trie、BFS、拓扑排序 |
-| 8 | `mini_framework/` | 小框架级组合能力 | mini FastAPI、mini ORM、mini pytest、mini Agent Runtime |
+---
 
-## 推荐路线
+## 学习路线
+
+### 路线 A：从语言到系统（推荐）
 
 ```text
-对象模型
--> 迭代器 / 生成器
--> 装饰器
--> 描述符 / OOP
--> 并发 / asyncio
--> 工程模式
--> 数据结构
--> mini framework
+01 设计哲学          → 建立 Pythonic 直觉
+  → 02 类型系统理论   → 鸭子类型、Protocol、gradual typing
+    → 03 解释器与运行时 → CPython、GIL、引用计数、内存管理
+      → 04 并发深度     → 线程、进程、asyncio、协程
+        → 05 标准库深度   → collections、itertools、functools
+          → 06 打包与工具链 → pip、setuptools、pyproject.toml
+            → 07 工程与设计   → FastAPI、Pydantic、测试、可观测性
+              → 08 高级主题     → 元类、描述符、C 扩展、Cython
 ```
 
-这个顺序的好处是：先把 Python 的运行模型吃透，再练抽象能力，最后把多个抽象组合成工程代码。
+### 路线 B：面试导向（快速）
 
-## 核心 30 题
+```text
+03 解释器与运行时 + 04 并发 → 面经核心
+  → 02 类型系统 + 05 标准库   → 展示深度
+    → 07 工程化               → 展示工程能力
+      → 动手训练场 30 题       → 手写代码 + 运行验证
+```
+
+### 路线 C：动手优先（工程导向）
+
+```text
+runtime-model/           → 对象模型、深拷贝、名字绑定（写代码跑实验）
+  → core-abstractions/     → 迭代器、装饰器、描述符（手写实现）
+    → type-system-gymnastics/ → Protocol、泛型、TypeVar
+      → concurrency/          → asyncio、线程安全、限流
+        → standard-library/     → LRU、Trie、Top K、BFS/DFS
+          → engineering-patterns/ → Repository、Event Bus、UoW
+            → mini-runtime/       → mini FastAPI、mini ORM、mini pytest
+              → 配合 Part I 理论深化
+```
+
+---
+
+## 核心 30 题（训练场索引）
 
 | 序号 | 题目 | 推荐目录 | 状态 |
-| --- | --- | --- | --- |
-| 1 | 手写 `deep_copy` | `object_model/` | done |
-| 2 | 手写 `flatten` | `object_model/` | todo |
-| 3 | 手写 `dedup` | `object_model/` | todo |
-| 4 | 手写 `group_by` | `object_model/` | todo |
-| 5 | 手写 `chunk` | `object_model/` | todo |
-| 6 | 手写 `range` | `iterators/` | todo |
-| 7 | 手写 `enumerate` | `iterators/` | todo |
-| 8 | 手写 `zip` | `iterators/` | todo |
-| 9 | 手写 `chain` | `iterators/` | todo |
-| 10 | 手写 `timer` | `decorators/` | todo |
-| 11 | 手写 `retry` | `decorators/` | todo |
-| 12 | 手写 `memoize` | `decorators/` | todo |
-| 13 | 手写 `once` | `decorators/` | todo |
-| 14 | 手写 `property` | `descriptors/` | todo |
-| 15 | 手写 `cached_property` | `descriptors/` | todo |
-| 16 | 手写字段校验描述符 | `descriptors/` | todo |
-| 17 | 手写简化版 `dataclass` | `descriptors/` | todo |
-| 18 | 手写 LRU Cache | `data_structures/` | todo |
-| 19 | 手写 Trie | `data_structures/` | todo |
-| 20 | 手写 Top K | `data_structures/` | todo |
-| 21 | 手写二分查找 | `data_structures/` | todo |
-| 22 | 手写 BFS / DFS | `data_structures/` | todo |
-| 23 | 手写拓扑排序 | `data_structures/` | todo |
+|------|------|---------|------|
+| 1 | 手写 `deep_copy` | `runtime-model/object_model/` | done |
+| 2 | 手写 `flatten` | `runtime-model/object_model/` | todo |
+| 3 | 手写 `dedup` | `runtime-model/object_model/` | todo |
+| 4 | 手写 `group_by` | `runtime-model/object_model/` | todo |
+| 5 | 手写 `chunk` | `runtime-model/object_model/` | todo |
+| 6 | 手写 `range` | `core-abstractions/iterators/` | todo |
+| 7 | 手写 `enumerate` | `core-abstractions/iterators/` | todo |
+| 8 | 手写 `zip` | `core-abstractions/iterators/` | todo |
+| 9 | 手写 `chain` | `core-abstractions/iterators/` | todo |
+| 10 | 手写 `timer` | `core-abstractions/decorators/` | todo |
+| 11 | 手写 `retry` | `core-abstractions/decorators/` | todo |
+| 12 | 手写 `memoize` | `core-abstractions/decorators/` | todo |
+| 13 | 手写 `once` | `core-abstractions/decorators/` | todo |
+| 14 | 手写 `property` | `core-abstractions/descriptors/` | todo |
+| 15 | 手写 `cached_property` | `core-abstractions/descriptors/` | todo |
+| 16 | 手写字段校验描述符 | `core-abstractions/descriptors/` | todo |
+| 17 | 手写简化版 `dataclass` | `core-abstractions/descriptors/` | todo |
+| 18 | 手写 LRU Cache | `standard-library/data_structures/` | todo |
+| 19 | 手写 Trie | `standard-library/data_structures/` | todo |
+| 20 | 手写 Top K | `standard-library/data_structures/` | todo |
+| 21 | 手写二分查找 | `standard-library/data_structures/` | todo |
+| 22 | 手写 BFS / DFS | `standard-library/data_structures/` | todo |
+| 23 | 手写拓扑排序 | `standard-library/data_structures/` | todo |
 | 24 | 手写线程安全计数器 | `concurrency/` | todo |
 | 25 | 手写生产者消费者 | `concurrency/` | todo |
 | 26 | 手写 `bounded_gather` | `concurrency/` | todo |
 | 27 | 手写 async retry | `concurrency/` | todo |
-| 28 | 手写 Event Bus | `engineering_patterns/` | todo |
-| 29 | 手写 Unit of Work | `engineering_patterns/` | todo |
-| 30 | 手写 mini Router / mini FastAPI | `mini_framework/` | todo |
+| 28 | 手写 Event Bus | `engineering-patterns/` | todo |
+| 29 | 手写 Unit of Work | `engineering-patterns/` | todo |
+| 30 | 手写 mini Router / mini FastAPI | `mini-runtime/mini_framework/` | todo |
 
-## 单题文件约定
+---
 
-每个实现文件尽量保持这个结构：
+## 面试主轴
 
-```python
-"""
-题目：
-考点：
-边界：
-"""
+| 主轴 | 必须能讲清楚的问题 | 对应 Part I 章节 |
+|------|------------------|----------------|
+| 对象模型 | 名字绑定、引用语义、可变/不可变、深拷贝、GIL | 01、03 |
+| 类型模型 | 鸭子类型、Protocol、TypeVar、gradual typing | 02 |
+| 并发模型 | GIL、线程 vs 进程、asyncio、协程、事件循环 | 04 |
+| 标准库模型 | 迭代协议、生成器、装饰器、描述符、上下文管理器 | 05 |
+| 工程模型 | FastAPI、Pydantic、测试、事件驱动、依赖注入 | 07 |
+| 高级模型 | 元类、描述符协议、C 扩展、内存优化 | 08 |
 
+---
 
-def solution(...):
-    ...
+## 运行约定
 
-
-if __name__ == "__main__":
-    ...
-```
-
-测试放在 `tests/` 下，优先用标准库 `unittest`，这样不依赖额外包。
-
-## 运行测试
-
-在仓库根目录执行：
+### 训练场代码
 
 ```bash
-python -m unittest discover -s python/tests
+cd language/python
+# 全部测试
+python -m unittest discover -s tests
+
+# 单题测试
+python -m unittest tests.test_deep_copy
 ```
 
-如果只想跑某一题：
+---
 
-```bash
-python -m unittest python.tests.test_deep_copy
-```
+## 状态说明
 
-## 训练重点
+| 标记 | 含义 |
+|------|------|
+| `seed` | 已建立目录与架构框架 |
+| `todo` | 待补充代码实现或详细内容 |
+| `done` | 已完成并可运行验证 |
 
-对你当前的 Python 后端、SQLAlchemy、Agent Runtime、SSE、事件一致性场景，优先级建议是：
-
-1. 装饰器：日志、重试、事务、限流、trace 都绕不开。
-2. 迭代器 / 生成器：分页、流式处理、懒加载会直接用到。
-3. 描述符：理解 ORM、Pydantic、FastAPI 参数系统的底层模型。
-4. asyncio：并发任务、超时、取消、限流、背压。
-5. Unit of Work / Event Bus：业务一致性和事务边界。
-6. mini framework：把零散机制组合成小系统。
+当前状态：
+- **Part I 理论体系**：8 个模块架构已建立，待逐层深化内容
+- **Part II 训练场**：目录与题单已建立，`deep_copy` 已完成，待逐一实现

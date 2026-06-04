@@ -32,31 +32,32 @@ API 怎么设计？
 
 ## 核心构件清单
 
+> 按 ROADMAP 约束，P0 不超过 5 个，每轮只推进 1 个。
+
 | 优先级 | 构件 | 目录 | 状态 |
 | --- | --- | --- | --- |
-| P0 | request client | `network/patterns/` | todo |
-| P0 | retry / timeout / cancellation | `network/patterns/` | todo |
+| P0 | middleware pipeline | `backend/patterns/middleware-pipeline/` | tested |
+| P0 | retry / timeout / circuit breaker | `backend/reliability/` | todo |
+| P0 | transaction boundary + idempotency | `backend/data-consistency/transaction-boundary/` | tested |
+| P0 | service observability baseline | `backend/observability/observability-baseline/` | tested |
 | P0 | debounce / throttle | `frontend/patterns/` | draft |
-| P0 | frontend architecture model | `frontend/` | todo |
-| P0 | frontend engineering blueprint | `frontend/frontend-engineering/` | todo |
-| P0 | framework deep dive | `frontend/frameworks/` | todo |
-| P0 | cross-platform architecture | `frontend/cross-platform/` | todo |
-| P0 | Node.js architecture model | `nodejs/` | todo |
-| P0 | Node.js ORM ecosystem | `nodejs/orm-database/` | todo |
-| P0 | middleware chain | `backend/patterns/` | todo |
-| P0 | worker pool / bounded queue | `concurrency/patterns/` | todo |
-| P0 | backend architecture model | `backend/` | todo |
-| P0 | transaction boundary playbook | `backend/data-consistency/` | todo |
-| P0 | service observability baseline | `backend/observability/` | todo |
-| P0 | AI backend runtime | `backend/ai-backend/` | todo |
+| P1 | worker pool / bounded queue | `concurrency/patterns/` | todo |
 | P1 | cache with TTL | `storage/patterns/` | todo |
 | P1 | event bus | `backend/patterns/` | todo |
 | P1 | rate limiter | `concurrency/patterns/` | todo |
 | P1 | structured logger | `observability/patterns/` | todo |
 | P1 | auth guard | `security/patterns/` | todo |
+| P1 | request client | `network/patterns/` | todo |
+| P1 | frontend architecture model | `frontend/` | todo |
+| P1 | frontend engineering blueprint | `frontend/frontend-engineering/` | todo |
+| P1 | framework deep dive | `frontend/frameworks/` | todo |
+| P1 | cross-platform architecture | `frontend/cross-platform/` | todo |
 | P1 | micro frontend decision framework | `frontend/micro-frontend/` | todo |
+| P1 | Node.js architecture model | `nodejs/` | todo |
+| P1 | Node.js ORM ecosystem | `nodejs/orm-database/` | todo |
 | P1 | Node.js realtime service | `nodejs/realtime/` | todo |
 | P1 | Node.js background jobs | `nodejs/background-jobs/` | todo |
+| P1 | AI backend runtime | `backend/ai-backend/` | todo |
 | P2 | contract test harness | `testing/patterns/` | todo |
 | P2 | CI quality gate | `devops/patterns/` | todo |
 

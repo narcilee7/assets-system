@@ -1,15 +1,38 @@
-# Read Write
+# Read & Write Path
 
-状态：seed。
+## 下单流程
 
-## 目标
+```
+用户下单
+  │
+  ▼
+预占库存（乐观锁）
+  │
+  ▼
+创建订单（待支付）
+  │
+  ▼
+等待支付
+  │
+  ▼
+支付成功 → 真正扣减库存
+超时 → 回滚预占
+```
 
-待补充。
+## 库存扣减（乐观锁）
 
-## 关键问题
+```go
+UPDATE inventory
+SET stock = stock - quantity
+WHERE sku_id = ? AND stock >= quantity
+```
 
-- 待补充。
+## 状态机
 
-## 决策与权衡
-
-- 待补充。
+```
+pending → paid → shipped → completed
+    ↓
+cancelled（超时/用户取消）
+    ↓
+refunded（退款）
+```

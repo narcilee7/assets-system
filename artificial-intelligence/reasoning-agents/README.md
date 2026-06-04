@@ -18,8 +18,5 @@
 
 | 资产 | 状态 |
 | --- | --- |
-| reasoning methods map | todo |
-| tool-use training data | todo |
-| verifier and self-consistency notes | todo |
-| test-time compute tradeoff | todo |
-
+| [Chain-of-Thought 推理](./chain-of-thought.md) | ✅ |
+| [Test-time Compute](./test-time-compute.md) | ✅ |

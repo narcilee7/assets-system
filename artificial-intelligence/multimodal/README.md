@@ -16,8 +16,5 @@
 
 | 资产 | 状态 |
 | --- | --- |
-| multimodal architecture map | todo |
-| image-text contrastive learning notes | todo |
-| audio-text pipeline | todo |
-| video understanding notes | todo |
-
+| [融合策略详解](./fusion-strategies.md) | ✅ |
+| [跨模态对齐](./cross-modal-alignment.md) | ✅ |

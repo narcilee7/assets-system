@@ -27,3 +27,9 @@
 局限
 ```
 
+## 资产
+
+| 资产 | 状态 |
+| --- | --- |
+| coding-assistant case study | todo |
+| vlm-document-assistant case study | todo |

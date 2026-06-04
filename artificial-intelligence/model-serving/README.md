@@ -25,9 +25,5 @@
 
 | 资产 | 状态 |
 | --- | --- |
-| model serving architecture | todo |
-| GPU memory estimation | todo |
-| prefill vs decode notes | todo |
-| model routing and fallback | todo |
-| serving observability baseline | todo |
-
+| [服务架构详解](./serving-architecture.md) | ✅ |
+| [GPU 显存估算](./gpu-memory.md) | ✅ |
