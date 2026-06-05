@@ -25,9 +25,9 @@
 
 | 资产 | 状态 |
 | --- | --- |
-| performance profiling toolkit | todo |
-| flame graph lab | todo |
-| latency budget worksheet | todo |
-| load test methodology | todo |
-| capacity estimation template | todo |
+| performance profiling toolkit | `docs/profiling.md` |
+| flame graph lab | `docs/flamegraph.md` |
+| latency budget worksheet | `docs/latency-budget.md` |
+| load test methodology | `docs/loadtest.md` |
+| capacity estimation template | `docs/capacity-estimation.md` |
 

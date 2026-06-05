@@ -15,9 +15,9 @@
 
 | 资产 | 状态 |
 | --- | --- |
-| SLO worksheet | todo |
-| incident response playbook | todo |
-| error budget policy | todo |
-| capacity planning worksheet | todo |
-| disaster recovery checklist | todo |
+| SLO worksheet | `docs/slo.md` |
+| incident response playbook | `docs/incident.md` |
+| error budget policy | `docs/error-budget.md` |
+| capacity planning worksheet | `docs/capacity-planning.md` |
+| disaster recovery checklist | `docs/disaster-recovery.md` |
 

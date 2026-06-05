@@ -15,11 +15,11 @@
 
 | 资产 | 状态 |
 | --- | --- |
-| B+Tree index deep dive | todo |
-| MVCC and isolation levels | todo |
-| WAL crash recovery notes | todo |
-| slow query diagnosis playbook | todo |
-| replication lag and consistency | todo |
+| B+Tree index deep dive | `docs/btree-index.md` |
+| MVCC and isolation levels | `docs/mvcc.md` |
+| WAL crash recovery notes | `docs/wal.md` |
+| slow query diagnosis playbook | `docs/slow-query.md` |
+| replication lag and consistency | `docs/replication.md` |
 
 ## 追问
 

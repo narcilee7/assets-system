@@ -16,9 +16,9 @@
 
 | 资产 | 状态 |
 | --- | --- |
-| Kubernetes request path | todo |
-| pod lifecycle notes | todo |
-| resource requests and limits | todo |
-| ingress and service networking | todo |
-| operator pattern notes | todo |
+| Kubernetes request path | `docs/k8s-request-path.md` |
+| pod lifecycle notes | `docs/pod-lifecycle.md` |
+| resource requests and limits | `docs/resource-limits.md` |
+| ingress and service networking | `docs/ingress-service.md` |
+| operator pattern notes | `docs/operator-pattern.md` |
 
