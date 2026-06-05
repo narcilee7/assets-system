@@ -12,11 +12,11 @@
 
 ## 资产
 
-| 资产 | 状态 |
-| --- | --- |
-| Terraform blueprint | todo |
-| GitOps workflow | todo |
-| config and secret layering | todo |
-| deployment rollback playbook | todo |
-| policy as code notes | todo |
+| 资产 | 文件 | 状态 |
+| --- | --- | --- |
+| Terraform blueprint | `docs/terraform-blueprint.md` | done |
+| GitOps workflow | `docs/gitops-workflow.md` | done |
+| config and secret layering | `docs/config-secret-layering.md` | done |
+| deployment rollback playbook | `docs/deployment-rollback.md` | done |
+| policy as code notes | `docs/policy-as-code.md` | done |
 
