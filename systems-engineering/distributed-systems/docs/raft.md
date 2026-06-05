@@ -271,6 +271,72 @@ Raft 推荐的简单方案：
 结果：最终一致，不会脑裂
 ```
 
+## L2：源码锚定与边界陷阱
+
+### etcd Raft 关键源码
+
+| 功能 | 文件/结构 | 说明 |
+|---|---|---|
+| Raft 状态机 | `raft/raft.go` | `raft.Raft` struct：Term、State、Log、Progress |
+| Leader 选举 | `raft/raft.go:becomeCandidate` / `becomeLeader` | 转换状态，发起 RequestVote |
+| 日志追加 | `raft/raft.go:appendEntry` | Leader 追加本地日志 |
+| 复制跟踪 | `raft/progress.go` | `Progress` struct：nextIndex、matchIndex、inflight |
+| 心跳 | `raft/raft.go:heartbeat` / `raft/raft.go:bcastHeartbeat` | Leader 广播心跳 |
+| 快照 | `raft/snapshot.go` | 日志过大时发送 snapshot |
+
+### Progress 与 inflight 的边界
+
+```go
+// etcd raft/tracker/progress.go
+ type Progress struct {
+     NextIndex  uint64  // 期望发送给该节点的下一个日志索引
+     MatchIndex uint64  // 该节点已确认的日志索引
+     Inflights  *Inflights // 已发出但尚未确认的消息窗口
+ }
+```
+
+- **Inflights**：Leader 对每条消息都记录在 inflight 窗口中，收到 follower ACK 后才释放。
+- **边界**：如果 follower 网络抖动，inflight 窗口满后 Leader 会停止发送，导致复制延迟。 inflight 大小默认 256，可通过 `MaxInflightMsgs` 调整。
+
+### 单节点变更的陷阱
+
+```
+3 节点扩容到 5 节点：
+  - 每次只添加 1 个节点
+  - 添加后：4 节点，需要 3/4 多数
+  - 如果此时再添加 1 个：5 节点，需要 3/5 多数
+
+陷阱：
+  - 新节点没有日志，leader 需要大量复制
+  - 如果 leader 复制能力不足，复制延迟会导致集群不可用
+  - 最佳实践：先添加为 Learner（只接收日志，不参与投票），追上后再转为正式节点
+```
+
+### 预投票（PreVote）
+
+```
+问题：网络分区恢复后，被隔离的节点 term 很高，重新加入集群后迫使 leader 降级。
+
+PreVote 机制：
+  - Candidate 先发送 PreVote RPC（不增加 term）
+  - 如果多数节点同意，才真正增加 term 并发起选举
+  - 避免 term 暴涨导致频繁 leader 切换
+```
+
+## L3：可运行实验
+
+见 `impl/raft_lab/`：
+
+```bash
+cd systems-engineering/distributed-systems/impl/raft_lab
+python3 raft_sim.py
+```
+
+脚本模拟：
+- 3 节点集群的 Leader 选举（RequestVote + 多数确认）
+- Leader 向 Followers 复制日志（AppendEntries）
+- Commit Index 的更新与多数确认
+
 ## 核心追问
 
 1. **Raft 为什么比 Paxos 更容易理解？** Paxos 把所有问题（leader 选举、日志复制、membership）混合在一个协议里；Raft 把问题分解成独立的子问题，每步都有明确的目标
@@ -287,10 +353,10 @@ Raft 推荐的简单方案：
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| Raft walkthrough | done |
-| distributed lock critique | todo |
-| message delivery semantics | todo |
-| sharding and rebalance playbook | todo |
-| consistency model comparison | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| Raft walkthrough | **L2+L3** | **done** |
+| distributed lock critique | L1 | todo |
+| message delivery semantics | L1 | todo |
+| sharding and rebalance playbook | L1 | todo |
+| consistency model comparison | L2+L3 | done |

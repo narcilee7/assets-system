@@ -349,6 +349,76 @@ ssl_stapling_verify on;
 resolver 8.8.8.8;
 ```
 
+## L2：源码锚定与边界陷阱
+
+### OpenSSL / BoringSSL 关键函数
+
+| 阶段 | 函数 | 说明 |
+|---|---|---|
+| ClientHello | `ssl3_send_client_hello` | ssl/statem/statem_clnt.c：发送版本、加密套件、key_share |
+| ServerHello | `tls_process_server_hello` | ssl/statem/statem_clnt.c：解析选中版本和密钥交换参数 |
+| 密钥推导 | `tls13_generate_handshake_secret` | ssl/tls13_enc.c：HKDF 导出 handshake traffic secret |
+| 证书验证 | `X509_verify_cert` | crypto/x509/x509_vfy.c：证书链验证 |
+| 0-RTT | `tls13_write_early_data` | ssl/record/rec_layer_s3.c：发送 early_data |
+
+### 证书链不完整陷阱
+
+```
+服务端只配置 leaf.crt（服务器证书）
+  └── 客户端没有中间证书
+      └── 无法建立信任链到 Root CA
+      └── 报错：certificate verify failed
+
+正确配置（Nginx）：
+  ssl_certificate /path/to/fullchain.pem;  # leaf + intermediate
+  ssl_certificate_key /path/to/privkey.pem;
+
+检查命令：
+  openssl s_client -connect example.com:443 -showcerts
+  # 如果只看到 1 张证书，说明链不完整
+```
+
+### SNI（Server Name Indication）
+
+```
+TLS 1.2 之前：
+  - 一个 IP 只能对应一个证书（因为握手时还没发 Host header）
+
+TLS 1.2+ SNI：
+  - ClientHello 的 extensions 中包含 server_name
+  - 服务端根据 SNI 选择对应的证书
+
+陷阱：
+  - 如果客户端（如旧版 Java 7）不支持 SNI，服务端返回默认证书
+  - 默认证书域名不匹配 -> 证书验证失败
+```
+
+### 边界陷阱
+
+1. **TLS 1.3 的 middlebox 兼容问题**：
+   TLS 1.3 的 ClientHello 在 wire 上看起来像 TLS 1.2（版本号伪装），但有些企业防火墙/代理会篡改握手包，导致握手失败。Chrome/Firefox 都有 fallback 到 TLS 1.2 的机制。
+
+2. **Session Ticket 密钥轮换**：
+   服务端用 ticket_key 加密 session ticket，如果 ticket_key 泄露，攻击者可解密 0-RTT 数据。生产环境应定期轮换 ticket_key。
+
+3. **证书过期监控盲区**：
+   只监控 leaf cert 过期不够，中间证书也可能过期（如 2021 年 DST Root CA X3 过期导致 Let's Encrypt 证书链问题）。应监控整条链的有效期。
+
+## L3：可运行实验
+
+见 `impl/tls_lab/`：
+
+```bash
+cd systems-engineering/computer-networking/impl/tls_lab
+python3 tls_client.py cloudflare.com
+```
+
+脚本输出：
+- 协商的 TLS 版本（如 TLSv1.3）
+- 加密套件（如 TLS_AES_256_GCM_SHA384）
+- 证书链信息（CN、SAN、Issuer、有效期）
+- 对比 TLS 1.2 与 TLS 1.3 的握手结果
+
 ## 核心追问
 
 1. **TLS 1.2 和 1.3 的核心区别？** 1.3 把 key_share 提前到第一个包，省掉 1 RTT；移除 RSA 密钥传输，强制前向保密
@@ -359,9 +429,9 @@ resolver 8.8.8.8;
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| TCP deep dive | done |
-| HTTP versions comparison | done |
-| TLS handshake walkthrough | done |
-| network troubleshooting playbook | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| TCP deep dive | L2+L3 | done |
+| HTTP versions comparison | L2+L3 | done |
+| TLS handshake walkthrough | **L2+L3** | **done** |
+| network troubleshooting playbook | L1 | todo |

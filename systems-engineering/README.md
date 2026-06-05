@@ -26,11 +26,11 @@
 | --- | --- | --- | --- | --- | --- |
 | Operating Systems | `operating-systems/` | 5 | 2 | 2 | 进程、线程、调度、内存、I/O、文件系统 |
 | Linux Systems | `linux-systems/` | 6 | 1 | 2 | shell、syscall、procfs、网络诊断、容器基础 |
-| Computer Networking | `computer-networking/` | 4 | 2 | 2 | TCP/IP、HTTP、TLS、DNS、负载均衡 |
+| Computer Networking | `computer-networking/` | 4 | 3 | 3 | TCP/IP、HTTP、TLS、DNS、负载均衡 |
 | Database Systems | `database-systems/` | 5 | 4 | 4 | 索引、事务、MVCC、WAL、查询优化、复制 |
-| Distributed Systems | `distributed-systems/` | 5 | 1 | 1 | CAP、Raft、复制、分片、时钟、消息语义 |
+| Distributed Systems | `distributed-systems/` | 5 | 2 | 2 | CAP、Raft、复制、分片、时钟、消息语义 |
 | Storage Systems | `storage-systems/` | 4 | 0 | 0 | 文件系统、对象存储、LSM、B+Tree、缓存 |
-| Cloud Native | `cloud-native/` | 5 | 2 | 2 | Docker、Kubernetes、Ingress、Service Mesh、Operator |
+| Cloud Native | `cloud-native/` | 5 | 3 | 3 | Docker、Kubernetes、Ingress、Service Mesh、Operator |
 | SRE / Reliability | `sre-reliability/` | 5 | 2 | 2 | SLO、错误预算、Incident、容量、降级 |
 | Performance Engineering | `performance-engineering/` | 5 | 1 | 1 | profiling、benchmark、火焰图、容量评估 |
 | Security Engineering | `security-engineering/` | 5 | 0 | 0 | IAM、密钥、网络安全、供应链、隔离 |
