@@ -16,9 +16,9 @@
 
 | 资产 | 状态 |
 | --- | --- |
-| Raft walkthrough | todo |
-| distributed lock critique | todo |
-| message delivery semantics | todo |
-| sharding and rebalance playbook | todo |
-| consistency model comparison | todo |
+| Raft walkthrough | `docs/raft.md` |
+| distributed lock critique | `docs/distributed-lock.md` |
+| message delivery semantics | `docs/message-delivery.md` |
+| sharding and rebalance playbook | `docs/sharding.md` |
+| consistency model comparison | `docs/consistency.md` |
 
