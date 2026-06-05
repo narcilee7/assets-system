@@ -257,6 +257,58 @@ spec:
       port: 8080
 ```
 
+## L2：源码锚定与边界陷阱
+
+### 源码锚定
+
+| 组件 | 关键源码/配置 | 说明 |
+|---|---|---|
+| kube-proxy iptables | `pkg/proxy/iptables/proxier.go` 中 `syncProxyRules` | 遍历 Service/Endpoints，生成 `KUBE-SVC-XXX` / `KUBE-SEP-XXX` chain；规则数随 Service 规模 O(N²) 增长 |
+| kube-proxy IPVS | `pkg/proxy/ipvs/proxier.go` 中 `syncProxyRules` | 使用 ipvsadm 管理虚拟服务；连接哈希表大小受 `ip_vs_conn_tab_size` 限制 |
+| CoreDNS | `plugin/kubernetes/kubernetes.go` 中 `ServeDNS` | 通过 Kubernetes API watch Endpoints，DNS TTL 默认 5s；ndots 逻辑在 `plugin/rewrite` 中处理 |
+| ingress-nginx | `rootfs/etc/nginx/lua/balancer.lua` | 动态 upstream 由 Lua 根据 Endpoints 变化实时更新，避免 nginx reload |
+| EndpointSlice | `pkg/controller/endpointslice/endpointslice_controller.go` | 默认 100 endpoints 一个 slice，减少 watch 推送量 |
+
+### 边界陷阱
+
+1. **externalTrafficPolicy: Local 的流量黑洞**：节点上无对应 Pod 时，请求被丢弃（Connection Refused），不会跨节点转发； DaemonSet 部署可避免此问题
+2. **CoreDNS ndots:5 导致解析风暴**：Pod 中 `search` 含 3 个域，查询短名称（如 `google.com`）会先尝试 `google.com.default.svc.cluster.local` 等 4 条，每次超时 5s，严重拖慢
+3. **NodePort 端口范围冲突**：默认 30000-32767 与某些内核参数或宿主机服务冲突；大规模集群中可用端口耗尽
+4. **iptables 规则数量爆炸**：Service 和 Endpoints 数量大时，`iptables -L` 可能达数万条，`syncProxyRules` 耗时秒级，更新期间新旧规则并存导致流量黑洞
+5. **Ingress pathType Prefix 的贪婪匹配**：`path: /api` 会匹配 `/api/v1` 和 `/apiv1`（无斜杠时）；不同 Controller 实现不一致，迁移时行为可能变化
+6. **sessionAffinity 与 IPVS 的 source hashing**：IPVS `sh` 算法在 Endpoint 变化时重哈希，会话可能被打到不同 Pod；iptables 的 `recent` 模块在高并发下性能差
+7. **LoadBalancer health check 黑洞**：云厂商 LB 健康检查与 kubelet 健康检查逻辑不同，LB 认为节点健康但本地 kube-proxy 未就绪，导致 50% 流量丢包
+8. **Headless Service 的 DNS A 记录**：返回所有 Pod IP，客户端需自行负载均衡；DNS 缓存导致客户端无法感知 Pod 变化，旧 IP 连接持续超时
+
+## L3：可运行实验
+
+> 实验目录：`systems-engineering/cloud-native/impl/ingress_lab/`
+
+### 实验 1：Service 负载均衡模拟
+
+```bash
+cd systems-engineering/cloud-native/impl/ingress_lab
+python3 service_lb.py --mode iptables --endpoints 10 --requests 1000
+```
+
+模拟 iptables 随机转发和 IPVS 一致性哈希的负载分布差异；输出各 Pod 接收请求数和最大偏差。
+
+### 实验 2：DNS ndots 解析延迟
+
+```bash
+python3 dns_ndots.py --query google.com --ndots 5
+```
+
+模拟 Pod 内 `resolv.conf` 的 search 域拼接过程；统计 ndots 导致的额外查询次数和理论超时时间。
+
+### 实验 3：Local 策略黑洞检测
+
+```bash
+python3 local_policy.py --nodes 3 --pods 2 --requests 100
+```
+
+模拟 3 节点集群中只有 2 个 Pod 时，`externalTrafficPolicy: Local` 下发往无 Pod 节点的请求被丢弃的比例。
+
 ## 核心追问
 
 1. **Ingress 和 Service 的区别？** Service 是四层代理（TCP/UDP）；Ingress 是七层代理（HTTP/HTTPS），可以基于 host/path/route 做更细粒度的路由
@@ -267,10 +319,10 @@ spec:
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| Kubernetes request path | done |
-| pod lifecycle notes | done |
-| resource requests and limits | done |
-| ingress and service networking | done |
-| operator pattern notes | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| Kubernetes request path | L3 | done |
+| pod lifecycle notes | L3 | done |
+| resource requests and limits | L3 | done |
+| ingress and service networking | L3 | done |
+| operator pattern notes | L1 | todo |

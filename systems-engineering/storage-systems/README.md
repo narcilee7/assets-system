@@ -12,10 +12,10 @@
 
 ## 资产
 
-| 资产 | 状态 |
-| --- | --- |
-| object storage multipart design | todo |
-| LSM compaction notes | todo |
-| page cache and fsync | todo |
-| storage durability checklist | todo |
+| 资产 | 文件 | 状态 |
+| --- | --- | --- |
+| object storage multipart design | `docs/object-storage.md` | done |
+| LSM compaction notes | `docs/lsm-compaction.md` | done |
+| page cache and fsync | `docs/page-cache-fsync.md` | done |
+| storage durability checklist | `docs/durability-checklist.md` | done |
 

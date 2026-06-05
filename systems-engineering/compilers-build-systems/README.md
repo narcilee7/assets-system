@@ -16,10 +16,10 @@
 
 ## 资产
 
-| 资产 | 状态 |
-| --- | --- |
-| compiler pipeline notes | todo |
-| build graph and cache | todo |
-| incremental build design | todo |
-| monorepo build architecture | todo |
+| 资产 | 文件 | 状态 |
+| --- | --- | --- |
+| compiler pipeline notes | `docs/compiler-pipeline.md` | done |
+| build graph and cache | `docs/build-graph-cache.md` | done |
+| incremental build design | `docs/incremental-build.md` | done |
+| monorepo build architecture | `docs/monorepo-build.md` | done |
 

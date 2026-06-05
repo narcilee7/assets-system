@@ -264,6 +264,65 @@ SHOW MASTER STATUS;  -- 显示 GTID_EXECUTED
 | 秒杀库存 | 超卖可能 | 不走从库，乐观锁/分布式锁 |
 | 支付查状态 | 体验问题 | 强制读主库 |
 
+## L2：源码锚定与边界陷阱
+
+### MySQL 复制关键源码
+
+| 组件 | 关键函数/文件 | 作用 |
+|---|---|---|
+| Master binlog dump | `mysql_binlog_send` | sql/binlog.cc：读取 binlog 并发送给 slave |
+| Slave I/O thread | `handle_slave_io` | sql/slave.cc：接收 binlog 写入 relay log |
+| Slave SQL thread | `handle_slave_sql` | sql/slave.cc：读取 relay log 并执行 |
+| 并行复制调度 | `mts_execute_events` | sql/rpl_slave.cc：组提交并行分发 |
+| Semi-sync | `repl_semi_sync_master_wait_point` | plugin/semisync/semisync_master.cc：等待 Slave ACK |
+| GTID | `gtid_executed` | sql/rpl_gtid.cc：全局事务 ID 管理 |
+
+### `Seconds_Behind_Master` 的误导性
+
+```sql
+SHOW SLAVE STATUS\G
+  Seconds_Behind_Master: 0
+```
+
+**为 0 不代表真的没延迟**：
+1. **I/O 线程卡住**：如果网络中断，I/O 线程无法接收新 binlog，SQL 线程追完了 relay log，SBM 显示 0，但实际上 Master 已经产生了大量新日志。
+2. **时间不同步**：Master 和 Slave 的 `NOW()` 不一致时，SBM = Master 时间 - Slave 时间，可能为负数或虚假 0。
+3. **大事务**：Slave 正在执行一个大事务，SBM 会显示为 0（因为当前执行的事务没有 "延迟" 概念），直到事务提交才跳变。
+
+更可靠的监控：
+```sql
+-- 对比 Master 和 Slave 的 GTID 集合
+SELECT GTID_SUBTRACT(@@gtid_executed, Retrieved_Gtid_Set) FROM performance_schema.replication_connection_status;
+
+-- 或使用 pt-heartbeat（在 Master 写心跳表，Slave 对比时间戳）
+```
+
+### 半同步复制的退化边界
+
+```
+Master 等待 Slave ACK（rpl_semi_sync_master_timeout=1000ms）
+  - Slave 在 1s 内 ACK -> 半同步成功
+  - Slave 超时未 ACK -> Master 自动降级为异步复制
+
+陷阱：
+  - 如果 Slave 负载高或网络抖动，频繁超时导致频繁降级/恢复
+  - 业务误以为"配置了半同步就安全"，实际上可能在关键时刻退化
+  - 监控必须同时看 Rpl_semi_sync_master_status 和 Rpl_semi_sync_master_no_tx
+```
+
+## L3：可运行实验
+
+见 `impl/replication_lab/`：
+
+```bash
+cd systems-engineering/database-systems/impl/replication_lab
+python3 replication_sim.py
+```
+
+脚本对比：
+- 单线程 Slave vs 多线程 Slave（4 workers）的延迟差异
+- 大事务（size=50）如何导致应用线程阻塞
+
 ## 核心追问
 
 1. **主从延迟的常见原因？** 大事务、SQL 线程单线程、从库硬件资源不足、网络延迟
@@ -274,10 +333,10 @@ SHOW MASTER STATUS;  -- 显示 GTID_EXECUTED
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| B+Tree index deep dive | done |
-| MVCC and isolation levels | done |
-| WAL crash recovery notes | done |
-| slow query diagnosis playbook | done |
-| replication lag and consistency | done |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| B+Tree index deep dive | L1 | done |
+| MVCC and isolation levels | L2+L3 | done |
+| WAL crash recovery notes | L2+L3 | done |
+| slow query diagnosis playbook | L2+L3 | done |
+| replication lag and consistency | **L2+L3** | **done** |

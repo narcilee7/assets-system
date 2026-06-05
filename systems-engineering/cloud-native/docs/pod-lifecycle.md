@@ -221,6 +221,65 @@ kubectl top node
 kubectl describe node | grep -A 5 "Allocated resources"
 ```
 
+## L2：源码与边界陷阱
+
+### kubelet 创建 Pod 的关键路径
+
+```
+kubelet syncLoop
+  └── syncPod (pkg/kubelet/kubelet.go)
+      ├── 1. 创建 sandbox（pause 容器）→ CRI RunPodSandbox
+      ├── 2. 拉取镜像 → CRI PullImage
+      ├── 3. 创建 Init Container → CRI CreateContainer + StartContainer
+      ├── 4. 创建 Main Container → CRI CreateContainer + StartContainer
+      ├── 5. 启动探针 goroutine（pkg/kubelet/prober/prober.go）
+      └── 6. 更新 PodStatus → API Server
+```
+
+探针执行：
+- `pkg/kubelet/prober/prober.go`：`runProbe` 方法根据 HTTP / TCP / Exec 三种类型执行探测。
+- 默认 `timeoutSeconds=1`，如果探针处理时间超过 1s，即使服务正常也会被判为失败。
+
+### 驱逐的精确语义
+
+kubelet 的驱逐管理器（`pkg/kubelet/eviction/eviction_manager.go`）按优先级排序：
+
+1. `Guaranteed`（requests == limits，且只设置了 CPU/内存）— **最后驱逐**
+2. `Burstable`（requests < limits）— **中间**
+3. `BestEffort`（未设置 requests/limits）— **最先驱逐**
+
+**注意**：
+- ` Guaranteed` 只是**不容易被驱逐**，不代表**不被 OOM Kill**。如果容器实际内存超过 limit，仍然会被 cgroup OOM Killer 杀死（Exit Code 137）。
+- 驱逐是 **Pod 级别**，OOM Kill 是 **容器级别**。
+
+### Sidecar 启动顺序（K8s 1.29+）
+
+传统 K8s 中，Sidecar 和主容器并行启动，如果 Sidecar（如 Envoy）还没准备好，主容器可能已经开始接收流量。
+
+K8s 1.29 引入 **Sidecar Containers**（`restartPolicy: Always` 的 init container）：
+```yaml
+initContainers:
+- name: envoy-sidecar
+  image: envoy:latest
+  restartPolicy: Always  # 作为 sidecar，在主容器前启动，且保持运行
+```
+
+这种 sidecar 在普通 init container 之后、主容器之前启动，确保代理就绪后再启动业务。
+
+## L3：可运行实验
+
+见 `impl/pod_lab/`：
+
+```bash
+cd systems-engineering/cloud-native/impl/pod_lab
+python3 pod_sim.py
+```
+
+脚本模拟：
+- Pending -> Running -> Ready 的正常启动流程
+- Liveness 失败后容器重启（ restartPolicy=Always 行为）
+- Readiness 变化与流量接收的关系
+
 ## 核心追问
 
 1. **Pending 状态的 Pod 怎么办？** 检查调度（kubectl describe pod 看事件）、资源不足（kubectl top node）、污点不允许（kubectl describe node）、镜像拉取失败（describe 看 ImagePullBackOff）
@@ -231,10 +290,10 @@ kubectl describe node | grep -A 5 "Allocated resources"
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| Kubernetes request path | done |
-| pod lifecycle notes | done |
-| resource requests and limits | todo |
-| ingress and service networking | todo |
-| operator pattern notes | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| Kubernetes request path | L2+L3 | done |
+| pod lifecycle notes | **L2+L3** | **done** |
+| resource requests and limits | L1 | todo |
+| ingress and service networking | L1 | todo |
+| operator pattern notes | L1 | todo |

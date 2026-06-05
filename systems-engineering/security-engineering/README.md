@@ -13,11 +13,11 @@
 
 ## 资产
 
-| 资产 | 状态 |
-| --- | --- |
-| security baseline checklist | todo |
-| secret rotation playbook | todo |
-| zero trust service access | todo |
-| container security notes | todo |
-| supply chain security checklist | todo |
+| 资产 | 文件 | 状态 |
+| --- | --- | --- |
+| security baseline checklist | `docs/security-baseline.md` | done |
+| secret rotation playbook | `docs/secret-rotation.md` | done |
+| zero trust service access | `docs/zero-trust.md` | done |
+| container security notes | `docs/container-security.md` | done |
+| supply chain security checklist | `docs/supply-chain.md` | done |
 

@@ -273,6 +273,69 @@ ls -la /proc/<pid>/ns/
 | 链接数耗尽 | ss -s, lsof | FD 泄漏或连接没释放 | 检查 FD，修复连接泄漏 |
 | 容器被 OOMKilled | docker stats, dmesg | 内存超限 | 调高 memory.limit 或优化内存 |
 
+## L2：/proc 字段计算与 cgroup/PSI
+
+### /proc 关键字段计算方式
+
+| 文件 | 字段 | 计算/含义 |
+|---|---|---|
+| `/proc/stat` | `cpu` line (user, nice, sys, idle, iowait, irq, softirq, steal) | 开机以来的 **jiffies**（通常 1/100 秒）累积值；两次采样差值 = 时间段内的 CPU 时间分布 |
+| `/proc/meminfo` | `MemAvailable` | 估算的可用内存（含可回收 cache），比 `MemFree` 更准确 |
+| `/proc/meminfo` | `AnonPages` | 匿名页（堆、栈），不与文件对应 |
+| `/proc/diskstats` | 第 4 字段 `rd_ios`, 第 8 字段 `wr_ios` | 读/写 I/O 请求次数；结合时间戳可算 IOPS |
+| `/proc/net/dev` | `bytes`, `packets`, `errs`, `drop` | 网卡统计；`drop` 增长说明 ring buffer 或队列溢出 |
+
+### cgroup v1 vs v2 路径差异
+
+| 资源 | cgroup v1 | cgroup v2 (unified) |
+|---|---|---|
+| 内存上限 | `memory.limit_in_bytes` | `memory.max` |
+| 内存软限制 | `memory.soft_limit_in_bytes` | `memory.high` |
+| CPU 上限 | `cpu.cfs_quota_us / cpu.cfs_period_us` | `cpu.max` (quota period) |
+| CPU 权重 | `cpu.shares` | `cpu.weight` |
+
+### PSI（Pressure Stall Information）
+
+Linux 4.20+ 引入，用于量化资源竞争导致的 **任务停滞时间**：
+
+```bash
+cat /proc/pressure/cpu
+# some avg10=0.00 avg60=0.00 avg300=0.00 total=1234567
+
+cat /proc/pressure/memory
+# some avg10=0.50 avg60=0.10 avg300=0.02 total=8901234
+# full avg10=0.20 avg60=0.05 avg300=0.01 total=4567890
+```
+
+- `some`：至少一个任务因等待该资源而停滞。
+- `full`：所有非空闲任务同时因等待该资源而停滞（更严重）。
+- `avg10`：过去 10 秒内的停滞时间占比。
+
+## L3：可运行诊断脚本
+
+### Bash 快速诊断
+
+```bash
+cd systems-engineering/linux-systems/impl
+./diag.sh --all              # 全量诊断
+./diag.sh --cpu --stress     # 先压测再诊断
+```
+
+### Go JSON 诊断器
+
+```bash
+cd diag_go
+go build -o diag_go diag.go
+./diag_go | jq .             # 输出 JSON，便于被监控采集
+```
+
+### 回归测试
+
+```bash
+cd ../test
+./validate.sh --all
+```
+
 ## 核心追问
 
 1. Load 高但 CPU 利用率低，说明什么？（I/O 等待或进程在等待锁/网络/磁盘）
@@ -294,10 +357,10 @@ ls -la /proc/<pid>/ns/
 
 ## 状态
 
-| 子资产 | 状态 |
-|---|---|
-| Linux troubleshooting playbook | done |
-| strace syscall lab | todo |
-| cgroup and namespace notes | todo |
-| file descriptor leak diagnosis | todo |
-| container resource limit lab | todo |
+| 子资产 | 深度 | 状态 |
+|---|---|---|
+| Linux troubleshooting playbook | **L2+L3** | **done** |
+| strace syscall lab | L1 | todo |
+| cgroup and namespace notes | L1 | todo |
+| file descriptor leak diagnosis | L1 | todo |
+| container resource limit lab | L1 | todo |

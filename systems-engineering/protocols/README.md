@@ -14,11 +14,11 @@
 
 ## 资产
 
-| 资产 | 状态 |
-| --- | --- |
-| HTTP protocol comparison | todo |
-| gRPC deadline and streaming | todo |
-| WebSocket heartbeat design | todo |
-| SSE resume protocol | todo |
-| QUIC overview | todo |
+| 资产 | 文件 | 状态 |
+| --- | --- | --- |
+| HTTP protocol comparison | `docs/http-comparison.md` | done |
+| gRPC deadline and streaming | `docs/grpc.md` | done |
+| WebSocket heartbeat design | `docs/websocket.md` | done |
+| SSE resume protocol | `docs/sse.md` | done |
+| QUIC overview | `docs/quic.md` | done |
 

@@ -182,6 +182,75 @@ kubectl exec -it <pod> -- ip route
 kubectl exec -it <pod> -- curl http://<target-pod-ip>:8080
 ```
 
+## L2：实现细节与边界
+
+### kube-proxy 源码与 iptables 规则
+
+在 Kubernetes 1.29 之前，iptables 是默认模式。kube-proxy 的 `proxier.go` (`pkg/proxy/iptables/proxier.go`) 负责：
+
+1. 监听 Service/EndpointSlice 变化
+2. 生成 iptables 规则链：
+   - `KUBE-SERVICES`：匹配目标 ClusterIP + port
+   - `KUBE-SVC-XXXX`：按概率分流到各 endpoint
+   - `KUBE-SEP-YYYY`：DNAT 到具体 PodIP:targetPort
+
+```bash
+# 查看生成的规则（在节点上）
+iptables -t nat -L KUBE-SERVICES -n | grep <service-name>
+```
+
+### Endpoint vs EndpointSlice
+
+- **Endpoints**（v1）：早期 API，所有 endpoint 存于一个对象。Service 后端 > 1000 时成为瓶颈。
+- **EndpointSlice**（discovery.k8s.io/v1）：将 endpoint 拆分为多个 slice（默认 100 个 endpoint/slice），kube-proxy 只需监听变更的 slice，大幅降低 API Server 和 kube-proxy 负载。
+
+### conntrack 与短连接性能陷阱
+
+```
+iptables 模式下的 Service 访问：
+  1. 出站报文命中 KUBE-SERVICES
+  2. DNAT 到 PodIP
+  3. conntrack 记录连接状态
+  4. 回包时从 conntrack 反 DNAT
+
+问题：
+  - 高并发短连接（如 HTTP/1.0 无 keep-alive）会快速填满 conntrack table
+  - 默认值 /proc/sys/net/netfilter/nf_conntrack_max ≈ 65536
+  - 满后报文被 DROP，出现 "随机" 连接失败
+
+解决：
+  - 升高 nf_conntrack_max
+  - 改用 IPVS 模式（连接表更大，支持更多算法）
+  - 使用 eBPF/Cilium（绕过 conntrack）
+```
+
+### CoreDNS 解析路径
+
+```
+Pod 内应用查询 users-svc.default.svc.cluster.local
+  └── /etc/resolv.conf 中 nameserver 指向 ClusterDNS (CoreDNS)
+      └── CoreDNS 监听 53，加载 kubernetes plugin
+          └── 查询 API Server 的 Service/Endpoint 资源
+              └── 返回 ClusterIP
+```
+
+CoreDNS 配置中的 `cache 30` 表示正向查询缓存 30 秒。如果 Service 的 endpoint 发生变更，DNS 缓存会导致最多 30 秒的老旧解析。
+
+## L3：可运行实验
+
+见 `impl/k8s_lab/`。需要 Docker + kind + kubectl：
+
+```bash
+cd systems-engineering/cloud-native/impl/k8s_lab
+./kind-setup.sh   # 创建本地集群并部署示例应用
+./trace.sh        # 跟踪请求路径：endpoints -> iptables -> DNS -> 跨 Pod 访问
+```
+
+实验会验证：
+- `kubectl get endpoints` 看到后端 Pod IP
+- iptables `KUBE-SERVICES` 链中存在 DNAT 规则
+- CoreDNS 能解析 `echo-svc.default.svc.cluster.local`
+
 ## 核心追问
 
 1. **为什么 Ingress Controller 需要 NodePort 暴露？** Ingress Controller 需要一个固定入口，NodePort 在每个节点开放端口，让外部流量能进来
@@ -192,10 +261,10 @@ kubectl exec -it <pod> -- curl http://<target-pod-ip>:8080
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| Kubernetes request path | done |
-| pod lifecycle notes | todo |
-| resource requests and limits | todo |
-| ingress and service networking | todo |
-| operator pattern notes | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| Kubernetes request path | **L2+L3** | **done** |
+| pod lifecycle notes | L1 | todo |
+| resource requests and limits | L1 | todo |
+| ingress and service networking | L1 | todo |
+| operator pattern notes | L1 | todo |

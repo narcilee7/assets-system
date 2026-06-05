@@ -230,20 +230,85 @@ SHOW VARIABLES LIKE 'innodb_buffer_pool_size';
 SHOW VARIABLES LIKE 'innodb_log_file_size';
 ```
 
+## L2：InnoDB 执行路径与诊断视图
+
+### 查询执行路径（简化）
+
+```
+SQL
+  └── Parser (sql/sql_parse.cc: mysql_parse)
+      └── Optimizer (sql/sql_optimizer.cc)
+          ├── Join optimization
+          ├── Index selection (cost model)
+          └── Range analysis
+              └── Executor
+                  ├── handler::ha_index_read (索引查找)
+                  └── handler::ha_rnd_pos (回表)
+```
+
+### Optimizer Trace（MySQL 5.6+）
+
+```sql
+SET optimizer_trace="enabled=on";
+SELECT * FROM orders WHERE status = 'pending';
+SELECT * FROM information_schema.OPTIMIZER_TRACE\G
+```
+
+在 `steps` 中可以看到：
+- `range_analysis`：哪些索引被考虑，成本估算。
+- `best_access_path`：最终选择的执行计划。
+
+### sys 视图定位慢查询（MySQL 5.7+ / 8.0）
+
+```sql
+-- 全表扫描最多的语句
+SELECT * FROM sys.statements_with_full_table_scans ORDER BY total_latency DESC LIMIT 5;
+
+-- 95 分位耗时最高的语句
+SELECT * FROM sys.statements_with_runtimes_in_95th_percentile LIMIT 5;
+```
+
+### 锁等待（MySQL 8.0）
+
+旧版 `information_schema.innodb_lock_waits` 已被 `performance_schema.data_lock_waits` 取代：
+
+```sql
+SELECT r.object_schema, r.object_name, r.thread_id AS waiting_thread,
+       b.thread_id AS blocking_thread
+FROM performance_schema.data_lock_waits w
+JOIN performance_schema.data_locks r ON r.engine_lock_id = w.requesting_engine_lock_id
+JOIN performance_schema.data_locks b ON b.engine_lock_id = w.blocking_engine_lock_id;
+```
+
+## L3：可运行实验
+
+见 `impl/slow_query_lab/`。快速体验：
+
+```bash
+cd systems-engineering/database-systems/impl/slow_query_lab
+docker compose up -d
+sleep 10
+pip install mysql-connector-python
+python3 python/load_generator.py
+python3 python/diagnose.py
+```
+
+实验自动生成 4 类慢查询（无索引扫描、深分页、锁竞争、大 JOIN），并通过 `sys` 视图和 `EXPLAIN` 自动诊断。
+
 ## 核心追问
 
 1. **EXPLAIN 的 type 字段怎么看？** ALL 最差（全表），const 最好（PK/UK 查找）；range 可接受；ref 良好
 2. **Using filesort 怎么优化？** 尽量在索引中排好序（覆盖索引），减少排序数据量；适当调大 sort_buffer_size
-3. **锁等待超时怎么排查？** 查 `information_schema.innodb_lock_waits`，找到 blocking_trx 和 waiting_trx，看谁长时间未提交
+3. **锁等待超时怎么排查？** 查 `information_schema.innodb_lock_waits`（旧版）或 `performance_schema.data_lock_waits`（MySQL 8），找到 blocking_trx 和 waiting_trx，看谁长时间未提交
 4. **深分页怎么优化？** 使用延迟关联或游标（基于主键范围）；避免 OFFSET 只用 WHERE id > last_id
 5. **为什么加了索引还是慢？** 统计信息过期（ANALYZE TABLE）；索引选择错误（force index）；回表成本太高（改为覆盖索引）
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| B+Tree index deep dive | done |
-| MVCC and isolation levels | done |
-| WAL crash recovery notes | done |
-| slow query diagnosis playbook | done |
-| replication lag and consistency | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| B+Tree index deep dive | L1 | done |
+| MVCC and isolation levels | L1 | done |
+| WAL crash recovery notes | L1 | done |
+| slow query diagnosis playbook | **L2+L3** | **done** |
+| replication lag and consistency | L1 | todo |

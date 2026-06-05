@@ -1,0 +1,2 @@
+flameprof>=0.4
+snakeviz>=2.1

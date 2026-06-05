@@ -13,11 +13,11 @@
 
 ## 资产
 
-| 资产 | 状态 |
-| --- | --- |
-| process vs thread notes | todo |
-| virtual memory deep dive | todo |
-| epoll and event loop bridge | todo |
-| file system and page cache | todo |
-| lock primitives comparison | todo |
+| 资产 | 文件 | 状态 |
+| --- | --- | --- |
+| process vs thread notes | `docs/process-thread.md` | done |
+| virtual memory deep dive | `docs/virtual-memory.md` | done |
+| epoll and event loop bridge | `docs/io-model.md` | done |
+| file system and page cache | `docs/file-system.md` | done |
+| lock primitives comparison | `docs/synchronization.md` | done |
 

@@ -175,6 +175,50 @@ mpstat -P ALL 1
 perf sched timehist
 ```
 
+## L2：Profiler 底层机制对照
+
+### perf_event_open 与 PMU
+
+```
+perf record -F 99 -g -p <pid>
+  └── 内核创建 perf_event，绑定到进程的 context switch
+      └── 硬件 PMU (Performance Monitoring Unit) 的 cycle counter
+          └── 每 N 个 CPU cycle 触发一次 PMI (Performance Monitoring Interrupt)
+              └── 内核保存当前 PC (program counter) 和调用栈
+                  └── 写入 perf_event mmap ring buffer
+                      └── 用户态 perf 读取并生成 perf.data
+```
+
+为什么选 **99Hz** 而不是 100Hz？避免与电源管理或其他固定 100Hz 事件对齐，减少采样偏差。
+
+### 语言级 Profiler 原理
+
+| 语言 | Profiler | 底层机制 | 开销 |
+|---|---|---|---|
+| Go | `runtime/pprof` | `setitimer(ITIMER_PROF, 99Hz)` → `SIGPROF` → 遍历所有 `g` 的栈 | 低（纯用户态，无内核栈 walk） |
+| Python | `cProfile` | `_PyEval_EvalFrameDefault` 进入/退出时计数 | 中高（解释器钩子，10-30% 开销） |
+| Java | async-profiler | `perf_event_open` + `mmap` 读取内核栈，配合 `AsyncGetCallTrace` | 极低（< 1%） |
+| Node.js | `--prof` | V8 内置采样器，基于 wall-clock 采样 JS 栈 | 低 |
+
+### 火焰图反模式
+
+1. **inline 函数消失**：编译器内联后，小函数不会出现在栈中；Go 用 `-l` 关闭内联观察，Java 用 `-XX:-Inline`（仅 debug）。
+2. **尾递归失真**：尾调用优化后，递归深度不会体现在栈高度上。
+3. **动态代理栈爆炸**：Java 的 `ReflectiveMethodAccessor` 和 CGLIB 会在火焰图中产生大量窄条，掩盖真实业务热点。
+
+## L3：可运行实验
+
+见 `impl/profiling_lab/`。推荐用 **Python** 快速体验：
+
+```bash
+cd systems-engineering/performance-engineering/impl/profiling_lab/python
+pip install -r requirements.txt
+./profile.sh
+# 生成 flame.svg，观察 fib 函数占比
+```
+
+Go / Java / TS 实现也在同级目录，供对照。
+
 ## 核心追问
 
 1. **perf 和火焰图的关系？** perf 是采样工具，收集 CPU 调用栈；火焰图是可视化工具，把采样数据渲染成 SVG
@@ -185,10 +229,10 @@ perf sched timehist
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| performance profiling toolkit | done |
-| flame graph lab | done |
-| latency budget worksheet | todo |
-| load test methodology | todo |
-| capacity estimation template | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| performance profiling toolkit | L2 | done |
+| flame graph lab | L2 | done |
+| latency budget worksheet | L1 | todo |
+| load test methodology | L1 | todo |
+| capacity estimation template | L1 | todo |

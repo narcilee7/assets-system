@@ -255,6 +255,95 @@ spec:
     pods: "20"
 ```
 
+## L2：源码锚定与边界陷阱
+
+### kubelet 资源管理关键路径
+
+| 阶段 | 源码位置 | 说明 |
+|---|---|---|
+| 调度决策 | `pkg/kubelet/kubelet.go:syncPod` | 检查节点是否满足 Pod requests |
+| CPU 限制 | `pkg/kubelet/cm/container_manager_linux.go` | 将 cpu.limit 转换为 cgroup `cpu.cfs_quota_us` |
+| 内存限制 | `pkg/kubelet/cm/container_manager_linux.go` | 将 memory.limit 转换为 cgroup `memory.limit_in_bytes` |
+| OOM 监控 | `pkg/kubelet/oom/oom_watcher_linux.go` | 监听 cgroup OOM 事件 |
+| 驱逐决策 | `pkg/kubelet/eviction/eviction_manager.go` | 按 QoS 排序，计算 reclaim 资源 |
+
+### CPU Throttling 的精确计算
+
+```
+CFS 调度周期：cpu.cfs_period_us = 100ms (默认)
+Pod CPU limit = 500m (0.5 core)
+  -> cpu.cfs_quota_us = 50ms
+
+含义：
+  每 100ms 周期内，该容器最多使用 50ms 的 CPU 时间
+  如果用满了 50ms，剩下的 50ms 被 throttled（冻结）
+
+问题：
+  - 如果应用是 "突发型"（如 10ms 内跑满，然后 idle）
+  - 即使平均 CPU 只有 30%，也可能因为突发超过 quota 而被 throttle
+  - 现象：CPU 不高，但 latency 高（因为被强制 sleep）
+
+解决：
+  - 增大 cpu.cfs_period_us（但影响调度精度）
+  - 使用 cpu.cfs_quota_us = -1（不限制，但不推荐）
+  - 设置 requests = limits（Guaranteed），减少竞争
+```
+
+### Memory Limit 与 OOM 的边界
+
+```
+Linux cgroup v1:
+  memory.limit_in_bytes = 256Mi
+  memory.usage_in_bytes 包含：
+    - RSS（实际物理内存）
+    - Page Cache（文件缓存）
+    - Kernel memory（如 slab）
+
+陷阱：
+  - Java 应用：JVM heap + metaspace + thread stack + native memory
+  - 如果 limit 只覆盖了 heap，native memory 溢出也会触发 OOM
+  - Go 应用：RSS 包含 heap + goroutine stack + runtime 开销，limit 应 > 1.2x heap
+
+K8s 的 memory limit 对应 cgroup memory.limit_in_bytes
+  - 超过后，系统 OOM Killer 会杀进程（不一定是应用进程，可能是系统进程）
+  - 如果容器内多个进程，OOM Killer 会按 oom_score 选择受害者
+```
+
+### 资源碎片与调度失败
+
+```
+节点：4 CPU, 8Gi
+已调度 Pod：
+  - Pod A: request 1.5 CPU
+  - Pod B: request 1.5 CPU
+剩余：1 CPU, 2Gi
+
+新 Pod C: request 1.2 CPU
+  -> 调度失败（1.2 > 1），即使 limit 是 2 CPU
+
+这是 "request 碎片"：
+  - 节点实际空闲资源可能足够（如果 A 和 B 没用满）
+  - 但 K8s 调度只看 requests 总和，不看实际使用
+
+解决：
+  - 使用 descheduler 重平衡
+  - 设置合理的 requests（接近实际使用）
+```
+
+## L3：可运行实验
+
+见 `impl/resource_lab/`：
+
+```bash
+cd systems-engineering/cloud-native/impl/resource_lab
+python3 resource_sim.py
+```
+
+脚本模拟：
+- 调度器根据 requests 判断 Pod 是否能调度到节点
+- 运行时 CPU throttling（usage > limit 或节点超售）
+- OOM Kill（mem_usage > mem_limit）
+
 ## 核心追问
 
 1. **requests 和 limits 的区别？** requests 用于调度决策，limits 用于运行时上限；requests 保证可用，limits 防止失控
@@ -265,10 +354,10 @@ spec:
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| Kubernetes request path | done |
-| pod lifecycle notes | done |
-| resource requests and limits | done |
-| ingress and service networking | todo |
-| operator pattern notes | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| Kubernetes request path | L2+L3 | done |
+| pod lifecycle notes | L2+L3 | done |
+| resource requests and limits | **L2+L3** | **done** |
+| ingress and service networking | L1 | todo |
+| operator pattern notes | L1 | todo |

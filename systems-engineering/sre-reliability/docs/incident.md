@@ -183,6 +183,57 @@ kubectl autoscale deployment <name> --cpu-percent=80 --min=2 --max=10
 kubectl scale deployment <name> --replicas=10
 ```
 
+## L2：指标、自动化与边界
+
+### MTTD / MTTR / MTBF
+
+| 指标 | 定义 | 计算方式 | 目标 |
+|---|---|---|---|
+| MTTD (Mean Time To Detect) | 从故障发生到告警触发的时间 | `alert_time - failure_start_time` | < 5 min |
+| MTTR (Mean Time To Recover) | 从告警触发到服务恢复的时间 | `resolved_time - alert_time` | P0 < 30 min |
+| MTBF (Mean Time Between Failures) | 两次故障间隔 | `total_uptime / failure_count` | 越长越好 |
+
+**注意**：MTTR 不包含根因修复，只到**服务恢复**（止血完成）。根因修复可能持续数小时，不应计入 MTTR。
+
+### 自动化响应层级
+
+```
+Level 0: 人工响应
+  告警 → 工程师手动处理
+
+Level 1: 辅助决策
+  告警 → 自动收集日志/metrics/trace → 推送到 Slack/飞书
+
+Level 2: 自动止损
+  告警 → 自动触发 runbook（如自动回滚、自动扩容、自动切流量）
+  条件：该 runbook 过去 10 次执行成功率 > 95%，且影响范围可控
+
+Level 3: 自愈
+  异常检测 → 自动修复（如重启不健康 Pod、清理磁盘、杀掉僵尸进程）
+```
+
+### 边界陷阱
+
+1. **"止血优先"不等于"不记录"**：
+   紧急回滚时如果忘记保留现场（日志、heap dump、线程 dump），事后可能永远无法定位根因。建议在止血脚本中**自动归档**关键证据。
+
+2. **复盘没有 Action Item = 白做**：
+   每条改进项必须有 OWNER 和 DEADLINE，并在下次复盘时 review 完成率。
+
+3. **Escalation 不是失败**：
+   值班工程师在 10 分钟内未定位就应升级，延迟升级会扩大故障影响。
+
+## L3：可运行实验
+
+见 `impl/incident_lab/`：
+
+```bash
+cd systems-engineering/sre-reliability/impl/incident_lab
+python3 timeline_generator.py
+```
+
+脚本随机生成一段故障时间线，练习计算 MTTD/MTTR 和制定 Action Items。适合团队轮值班前演练。
+
 ## 核心追问
 
 1. **止血和根因的优先级？** 止血优先。P0/P1 故障时，先让用户能用，再排查根因
@@ -193,10 +244,10 @@ kubectl scale deployment <name> --replicas=10
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| SLO worksheet | done |
-| incident response playbook | done |
-| error budget policy | todo |
-| capacity planning worksheet | todo |
-| disaster recovery checklist | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| SLO worksheet | L2+L3 | done |
+| incident response playbook | **L2+L3** | **done** |
+| error budget policy | L1 | todo |
+| capacity planning worksheet | L1 | todo |
+| disaster recovery checklist | L1 | todo |

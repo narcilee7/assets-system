@@ -241,6 +241,51 @@ if (P) {
 | 配置下发 | Sequential | 需要有序但不要求实时 |
 | DNS | Eventual | TTL 缓存，可接受最终一致 |
 
+## L2：实现细节与边界
+
+### 线性一致性的工程实现
+
+- **etcd / Raft**：所有写操作通过 Raft log 复制到多数节点，`ReadIndex` 机制保证读也线性一致（Leader 确认自己仍是 Leader 后才返回）。
+- **Zookeeper (ZAB)**：保证顺序一致性 + 单客户端 FIFO。写操作全局有序，但不同客户端可能看到略微不同的时序。
+- **Cassandra (QUORUM)**：`QUORUM` 读写交叉时（R + W > N）可提供强一致，但默认 `ONE` 读取是最终一致。
+
+### 向量时钟的代价
+
+```
+VC 大小 = 节点数 N
+- 节点数增加时，每次请求携带的元数据线性增长
+- 删除节点后，VC 中残留条目需要垃圾回收（Dynamo 用 clock prune）
+- 如果 N > 1000，VC 成为带宽和存储瓶颈
+```
+
+替代方案：**Hybrid Logical Clock (HLC)** = 物理时钟 + Lamport counter，既能因果排序又能和物理时间对齐，大小固定。
+
+### CRDT 的 state-based vs operation-based
+
+| 类型 | 传输内容 | 要求 | 示例 |
+|---|---|---|---|
+| State-based | 完整状态 | 可交换、幂等、单调 | G-Counter 合并取 max |
+| Op-based | 操作日志 | 可靠广播 + 因果交付 | OR-Set 的 add/remove 操作 |
+
+Op-based 通常更省带宽，但需要底层消息系统保证因果顺序 delivery。
+
+### 边界陷阱
+
+1. **最终一致性的 "最终" 没有上限**：在网络分区持续期间，副本可能永远不一致。
+2. **Last-Write-Wins 的时钟依赖**：如果节点时钟漂移，可能导致"未来"写入被"过去"写入覆盖。
+3. **强一致的读延迟尾跳**：etcd 的 `ReadIndex` 在 Leader 选举或网络抖动时，延迟可能从 ms 级跳到数百 ms。
+
+## L3：可运行实验
+
+见 `impl/consistency_lab/`：
+
+```bash
+cd systems-engineering/distributed-systems/impl/consistency_lab
+python3 crdt.py
+```
+
+演示 G-Counter 的合并（取各节点 max）和 LWW-Register 的合并（取最大 timestamp）。
+
 ## 核心追问
 
 1. **Linearizability 和 Sequential Consistency 的区别？** Linearizability 要求操作的时间顺序和全局时钟一致；Sequential 只要求所有进程看到的顺序一致，不要求和真实时间一致
@@ -251,10 +296,10 @@ if (P) {
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| Raft walkthrough | done |
-| distributed lock critique | done |
-| message delivery semantics | done |
-| sharding and rebalance playbook | done |
-| consistency model comparison | done |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| Raft walkthrough | L1 | done |
+| distributed lock critique | L1 | done |
+| message delivery semantics | L1 | done |
+| sharding and rebalance playbook | L1 | done |
+| consistency model comparison | **L2+L3** | **done** |

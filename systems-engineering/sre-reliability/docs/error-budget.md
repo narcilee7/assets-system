@@ -209,12 +209,63 @@ Dashboard 面板：
 4. **错误预算消耗快怎么处理？** 先止血（回滚），再根因分析，最后决定下一步
 5. **SLO 达不到怎么办？** 先评估目标是否合理；短期可以放宽；长期需要架构改进
 
+## L2：源码锚定与边界陷阱
+
+### 源码锚定
+
+| 实现/规范 | 关键源码/函数 | 说明 |
+|---|---|---|
+| Prometheus histogram_quantile | `promql/quantile.go` 中 `bucketQuantile` | 线性插值估算分位点；桶边界越宽误差越大，直接决定 SLI 准确性 |
+| Prometheus recording rule | `rules/manager.go` 中 `eval()` | 预聚合降低查询复杂度；rule evaluation interval 必须小于告警窗口 |
+| Alertmanager group_wait | `dispatch/dispatch.go` 中 `calcTimeout` | `group_wait` 过短导致告警风暴，过长延迟通知 |
+| Google SRE Workbook | 第 2 章 Multi-window, Multi-burn-rate alerts | 快速燃烧（短窗口高倍率）+ 慢速燃烧（长窗口低倍率）的组合策略 |
+| Kubernetes SLO 实现 | `slo-monitor` 中 latency SLI 按 verb/resource 拆分 | 不同 API 延迟要求不同，统一阈值会误报 |
+
+### 边界陷阱
+
+1. **错误预算 ≠ 允许故意出错**：预算是风险缓冲，用于衡量可靠性债务；故意消耗预算会侵蚀应对突发故障的能力
+2. **滚动窗口 vs 日历窗口**：滚动窗口（rolling 30d）永远有历史包袱，日历窗口（calendar month）月初重置可能掩盖月末故障
+3. **多 SLI 的预算冲突**：可用性预算和延迟预算独立计算时，一个故障可能同时消耗两份预算，导致过早冻结发布
+4. ** burn rate 跳变**：短窗口（1h）burn rate 对尖峰敏感，长窗口（3d）burn rate 对累积敏感；只设单一窗口会漏报或误报
+5. **错误预算为负**：如果当前周期已超标，剩余预算为负数；此时应冻结发布并启动可靠性专项，而不是等待自然恢复
+6. **百分位 SLI 的隐藏损失**：P99 延迟达标不代表全部用户满意；尾部 1% 的请求可能全部来自某个大客户
+7. **数据回填导致预算重算**：修改 recording rule 或修正历史数据后，已消耗的错误预算可能发生变化，影响发布决策
+
+## L3：可运行实验
+
+> 实验目录：`systems-engineering/sre-reliability/impl/error_budget_lab/`
+
+### 实验 1：错误预算计算器
+
+```bash
+cd systems-engineering/sre-reliability/impl/error_budget_lab
+python3 budget_calculator.py
+```
+
+模拟不同 SLO（99%、99.9%、99.99%）在月度、季度周期内的允许停机时间；输出分钟/小时/天。
+
+### 实验 2：Burn Rate 模拟器
+
+```bash
+python3 burn_rate_simulator.py
+```
+
+模拟随机错误流量，计算 1h、6h、3d 窗口的 burn rate；根据 Google SRE 推荐的多窗口多燃烧率规则触发告警（fast-burn / slow-burn）。
+
+### 实验 3：发布门控决策
+
+```bash
+python3 release_gate.py --slo 99.9 --budget-remaining 0.25
+```
+
+输入当前剩余预算比例，输出发布建议（allow / review / approval / block）。
+
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| SLO worksheet | done |
-| incident response playbook | done |
-| error budget policy | done |
-| capacity planning worksheet | todo |
-| disaster recovery checklist | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| SLO worksheet | L3 | done |
+| incident response playbook | L3 | done |
+| error budget policy | L3 | done |
+| capacity planning worksheet | L1 | todo |
+| disaster recovery checklist | L1 | todo |

@@ -288,6 +288,53 @@ BBR:   RTT 增大就减速（更早发现拥塞）
 - CUBIC 更稳定
 ```
 
+## L2：内核关键路径与 sysctl
+
+### 内核函数速查（Linux 5.10+）
+
+| 阶段 | 关键函数 | 文件 |
+|---|---|---|
+| 接收路径 | `tcp_rcv_established` | net/ipv4/tcp_input.c |
+| 发送路径 | `tcp_transmit_skb` | net/ipv4/tcp_output.c |
+| 重传定时器 | `tcp_retransmit_timer` | net/ipv4/tcp_timer.c |
+| RTT 采样 | `tcp_ack` → `tcp_rtt_estimator` | net/ipv4/tcp_input.c |
+| 拥塞控制 | `tcp_cong_control` → `cubic/bbr` | net/ipv4/tcp_cong.c |
+
+### 关键 sysctl
+
+```bash
+# RTO 最小值（默认 200ms）
+sysctl net.ipv4.tcp_rto_min
+
+# 连接建立后最多重传次数（默认 15）
+sysctl net.ipv4.tcp_retries2
+
+# 空闲后是否重置 cwnd（默认 1，建议长连接设为 0）
+sysctl net.ipv4.tcp_slow_start_after_idle
+
+# 未发送数据低水位（减少延迟抖动）
+sysctl net.ipv4.tcp_notsent_lowat
+```
+
+### BBR vs CUBIC 模型差异
+
+- **CUBIC**：丢包 = 拥塞信号。`cwnd` 按三次函数增长，丢包后 `ssthresh = cwnd/2`。
+- **BBR**：不依赖丢包。模型 = `BtlBw`（瓶颈带宽） × `RTprop`（最小 RTT）。
+  - 如果 RTT 上升但带宽没升 → inflight 超过最佳值 → 减速。
+  - 在弱网/高带宽高延迟网络中，BBR 吞吐量更平稳，但可能与 CUBIC 共存时抢带宽。
+
+## L3：可运行实验
+
+见 `impl/tcp_lab/`。推荐用 **Python** 快速体验：
+
+```bash
+cd systems-engineering/computer-networking/impl/tcp_lab/python
+python3 tcp_metrics.py        # 查看重传率和 TIME_WAIT
+sudo ./simulate_loss.sh       # 用 tc 模拟丢包并测速（需要 Linux + root）
+```
+
+> macOS 用户请用 Docker：`docker run --rm --privileged -it -v $(pwd):/lab ubuntu:22.04 bash`
+
 ## 核心追问
 
 1. **为什么三次握手不能带数据？** 带数据的话可能放大 SYN 泛洪攻击；且握手完成前没有拥塞控制窗口
@@ -309,9 +356,9 @@ BBR:   RTT 增大就减速（更早发现拥塞）
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| TCP deep dive | done |
-| HTTP versions comparison | todo |
-| TLS handshake walkthrough | todo |
-| network troubleshooting playbook | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| TCP deep dive | **L2+L3** | **done** |
+| HTTP versions comparison | L1 | todo |
+| TLS handshake walkthrough | L1 | todo |
+| network troubleshooting playbook | L1 | todo |
