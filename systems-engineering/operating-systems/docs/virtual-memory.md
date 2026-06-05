@@ -270,6 +270,56 @@ MAP_SHARED：
   - 对象复用，cache line 友好
 ```
 
+## L2：内核缺页与内存管理路径
+
+### 缺页中断路径（Linux 5.10+）
+
+```
+用户态访问未映射页
+  └── CPU 触发 #PF (Page Fault)
+      └── entry_SYSCALL_64 / do_page_fault (arch/x86/mm/fault.c)
+          └── handle_mm_fault (mm/memory.c)
+              ├── 匿名页：do_anonymous_page → alloc_page → 清零页 → 建立 PTE
+              ├── 文件页：do_fault → filemap_fault → page cache / readpage
+              ├── swap：do_swap_page → swapin_readahead
+              └── COW：do_wp_page → alloc_page → 复制内容 → 更新父子 PTE
+```
+
+关键数据结构：
+- `struct mm_struct`：进程的内存描述符，包含 `pgd`（页全局目录基址）。
+- `struct vm_area_struct`：描述一段连续的虚拟内存区域（代码段、堆、栈、mmap 区域）。
+- `struct page`：物理页描述符，通过 `PFN` 与页表项关联。
+
+### /proc 内存指标速查
+
+| 文件 | 字段 | 含义 |
+|---|---|---|
+| `/proc/<pid>/status` | `VmSize` | 虚拟地址空间总大小 |
+| `/proc/<pid>/status` | `VmRSS` | 实际驻留物理内存 |
+| `/proc/<pid>/status` | `VmSwap` | 被换出到 swap 的大小 |
+| `/proc/<pid>/stat` | `minflt` | 次要缺页次数（无需磁盘） |
+| `/proc/<pid>/stat` | `majflt` | 主要缺页次数（需要磁盘 I/O） |
+| `/proc/<pid>/smaps` | `Private_Dirty` | 私有脏页（COW 后产生） |
+
+### 大页与延迟
+
+- **THP (Transparent Huge Pages)**：内核自动将相邻 4KB 页合并为 2MB 大页，减少 TLB miss，但可能增加内存碎片和延迟抖动（`khugepaged` 合并时触发页迁移）。
+- **MADV_HUGEPAGE / MADV_NOHUGEPAGE**：显式建议内核是否对某段内存使用大页。
+
+## L3：可运行实验
+
+见 `impl/vm_lab/`。推荐用 **Python** 快速体验：
+
+```bash
+cd systems-engineering/operating-systems/impl/vm_lab/python
+python3 page_fault_counter.py
+python3 cow_demo.py
+```
+
+Go / Java 版本也在同级目录，用于对比不同运行时的 RSS 行为（例如 Java `new byte[]` 会立即清零导致 RSS 上升）。
+
+> 实验需要 Linux `/proc`。macOS 用户请用 Docker：`docker run --rm -it -v $(pwd):/lab ubuntu:22.04 bash`
+
 ## 核心追问
 
 1. **为什么 32 位系统限制 4GB？** 虚拟地址 32 位，2^32 = 4GB 地址空间
@@ -280,10 +330,10 @@ MAP_SHARED：
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| process vs thread notes | done |
-| virtual memory deep dive | done |
-| epoll and event loop bridge | todo |
-| file system and page cache | todo |
-| lock primitives comparison | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| process vs thread notes | L1 | done |
+| virtual memory deep dive | **L2+L3** | **done** |
+| epoll and event loop bridge | L1 | todo |
+| file system and page cache | L1 | todo |
+| lock primitives comparison | L1 | todo |

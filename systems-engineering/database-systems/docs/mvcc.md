@@ -215,6 +215,54 @@ INSERT 操作先加 Insert Intention Lock：
 Insert Intention Lock 不阻塞其他插入意向锁
 ```
 
+## L2：源码锚定与边界陷阱
+
+### InnoDB 源码关键路径
+
+| 功能 | 函数 | 文件 |
+|---|---|---|
+| 创建 Read View | `trx_sys->mvcc->view_open` | storage/innobase/read/read0read.cc |
+| 可见性判断 | `row_search_mvcc` → `lock_clust_rec_cons_read_sees` | storage/innobase/row/row0sel.cc |
+| 当前读加锁 | `lock_rec_lock` → `lock_clust_rec_read_check_and_lock` | storage/innobase/lock/lock0lock.cc |
+| Undo 解析 | `trx_undo_prev_version_build` | storage/innobase/trx/trx0rec.cc |
+| Gap Lock | `lock_rec_insert_check_and_lock` | storage/innobase/lock/lock0lock.cc |
+
+### 边界陷阱
+
+1. **RR 下 `UPDATE/DELETE` 是当前读**：
+   ```sql
+   BEGIN;  -- RR
+   SELECT balance FROM users WHERE id=1;  -- 快照读，看到 100
+   UPDATE users SET balance=balance-10 WHERE id=1;  -- 当前读！如果别的事务已改为 80，这里基于 80 计算
+   ```
+   这会导致"丢失更新"错觉：快照读看到旧值，但写入时基于最新值。
+
+2. **Gap Lock 在 RC 下不生效**：
+   MySQL 8.0 中 `innodb_locks_unsafe_for_binlog` 已废弃，RC 级别默认只锁记录本身（Record Lock），不锁间隙。因此 RC 无法阻止幻读，只能靠应用层或唯一索引约束。
+
+3. **Index 上没有的等值查询会退化为 Gap Lock**：
+   ```sql
+   SELECT * FROM t WHERE id = 5 FOR UPDATE;  -- id=5 不存在
+   ```
+   InnoDB 会在 `(3,5]` 上加 Next-Key Lock，同时在 `(5,7)` 上加 Gap Lock，阻止插入 id=5。
+
+4. **长事务导致 Undo 堆积**：
+   RR 事务持有 Read View，导致 Undo 无法 purge，最终可能撑爆 ibdata1 或 undo tablespace。
+
+## L3：可运行实验
+
+见 `impl/mvcc_lab/`：
+
+```bash
+cd systems-engineering/database-systems/impl/mvcc_lab
+python3 mvcc.py
+```
+
+预期输出：
+- `[B RR] first read x = 100`
+- `[B RC] second read x = 200` （RC 每次重新创建 Read View）
+- `[B RR] second read x = 100` （RR 复用第一次的 Read View）
+
 ## 核心追问
 
 1. **RR 和 RC 的本质区别？** RR 在事务开始时创建读视图，整个事务复用；RC 每次 SELECT 都重新创建读视图
@@ -225,10 +273,10 @@ Insert Intention Lock 不阻塞其他插入意向锁
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| B+Tree index deep dive | done |
-| MVCC and isolation levels | done |
-| WAL crash recovery notes | todo |
-| slow query diagnosis playbook | todo |
-| replication lag and consistency | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| B+Tree index deep dive | L1 | done |
+| MVCC and isolation levels | **L2+L3** | **done** |
+| WAL crash recovery notes | L1 | todo |
+| slow query diagnosis playbook | L2+L3 | done |
+| replication lag and consistency | L1 | todo |

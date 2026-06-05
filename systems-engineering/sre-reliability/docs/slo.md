@@ -217,6 +217,58 @@ SLO（内部目标）：
   - SLO 持续达标：考虑放松 SLO，释放资源
 ```
 
+## L2：Burn Rate 数学与多窗口告警
+
+### Burn Rate 公式
+
+```
+Burn Rate = (实际错误率) / (理想错误率)
+          = (错误请求 / 总请求) / (1 - SLO)
+```
+
+- **1x burn rate**：按正常速度消耗月度错误预算，月底刚好用完。
+- **10x burn rate**：10 小时内消耗掉 10% 的月度预算（即 1 小时消耗 1%）。
+- **100x burn rate**：1 小时内消耗 10% 的月度预算，需要立即 page。
+
+Google SRE 推荐的多窗口告警（Multi-window, Multi-burn-rate）：
+
+| Burn Rate | 长窗口 | 短窗口 | 消耗预算 | 动作 |
+|---|---|---|---|---|
+| 1x | 3 天 | 1 小时 | 5% / 3 天 | 工单 |
+| 2x | 3 天 | 1 小时 | 10% / 3 天 | 工单 |
+| 6x | 1 天 | 5 分钟 | 5% / 1 天 | Page |
+| 10x | 3 小时 | 5 分钟 | 2% / 3 小时 | Page |
+
+核心思想：**短窗口捕捉突发故障，长窗口防止持续的小流量泄漏被忽略。**
+
+### 边界陷阱
+
+1. **SLO 不是越高越好**：
+   - 99.999%（5 个 9）的月度预算只有 26 秒。
+   - 达到 5 个 9 的边际成本极高，且多数用户感知不到 99.9% 与 99.99% 的差异。
+
+2. **错误预算 "消耗" 与 "累积" 的区别**：
+   - 消耗（consumption）是固定窗口内的实际错误量。
+   - 累积（accumulation）是跨窗口的债务。如果上月预算没用完，不应结转到下月。
+
+3. **过度告警导致疲劳**：
+   - 只设一个 1% 错误率阈值 → 轻微抖动就触发。
+   - 应该用 burn rate + 多窗口，确保告警时错误预算真的在快速流失。
+
+4. **SLI 选择误区**：
+   - 不要选"CPU 利用率"作为 SLI，用户不关心你的 CPU，只关心请求是否成功、有多快。
+
+## L3：可运行实验
+
+见 `impl/slo_lab/`：
+
+```bash
+cd systems-engineering/sre-reliability/impl/slo_lab
+python3 burn_rate.py
+```
+
+脚本模拟正常流量、事故期（5% 错误率）和恢复期，实时输出 error rate 和 burn rate。
+
 ## 核心追问
 
 1. **SLO 和 SLA 的区别？** SLO 是内部追求的目标，SLA 是对外承诺的合同；SLO 应该比 SLA 更严格
@@ -227,10 +279,10 @@ SLO（内部目标）：
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| SLO worksheet | done |
-| incident response playbook | todo |
-| error budget policy | todo |
-| capacity planning worksheet | todo |
-| disaster recovery checklist | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| SLO worksheet | **L2+L3** | **done** |
+| incident response playbook | L1 | todo |
+| error budget policy | L1 | todo |
+| capacity planning worksheet | L1 | todo |
+| disaster recovery checklist | L1 | todo |

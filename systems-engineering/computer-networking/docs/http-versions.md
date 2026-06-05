@@ -250,6 +250,55 @@ ECDHE 密钥交换
 | 复杂度 | 低 | 中 | 高 |
 | 兼容网络 | 最好 | 好 | 差（UDP 丢包） |
 
+## L2：协议实现细节与边界
+
+### HPACK 与 QPACK 对比
+
+| 特性 | HPACK (HTTP/2) | QPACK (HTTP/3) |
+|---|---|---|
+| 动态表更新 | 顺序依赖（丢包会阻塞后续 header 解码） | 独立流（Out-of-band 更新，不阻塞） |
+| 索引大小 | 4KB（默认） | 可变，通常更大 |
+| 压缩率 | 高（但存在 CRIME/BREACH 风险） | 高，且消除了 Hol 阻塞风险 |
+
+QPACK 的改进：HTTP/3 中 header 压缩表的更新通过独立的 **Encoder Stream / Decoder Stream** 传输，不混在数据流中，因此不会受到流级丢包的影响。
+
+### 0-RTT 与重放攻击
+
+```
+TLS 1.3 0-RTT:
+  Client -> Server: ClientHello + early_data(encrypted GET /balance)
+  Server -> Client: ServerHello + 处理请求
+
+风险：
+  - 攻击者截获 early_data 包，重放给服务器
+  - 如果请求是 GET /balance（幂等），重放无害
+  - 如果请求是 POST /transfer?to=attacker&amount=1000，重放会造成重复转账
+
+缓解：
+  - 服务器端实现 anti-replay（存储已处理的 0-RTT nonce）
+  - 限制 0-RTT 只用于幂等、无副作用的请求
+```
+
+### 边界陷阱
+
+1. **HTTP/2 Server Push 已废弃**：Chrome 106+ 已移除对 HTTP/2 Server Push 的支持，推荐用 `103 Early Hints` 或 Preload 替代。
+2. **HTTP/3 的 UDP 被中间件限速**：某些企业防火墙、QoS 策略对 UDP 限制比 TCP 更严格，导致 HTTP/3 实际可用带宽更低。
+3. **HTTP/2 的流控可能饿死小流**：如果某个流窗口被耗尽，即使其他流有数据也无法发送，需要合理设置 `SETTINGS_INITIAL_WINDOW_SIZE`。
+
+## L3：可运行实验
+
+见 `impl/http_lab/`：
+
+```bash
+cd systems-engineering/computer-networking/impl/http_lab
+python3 http_simulator.py
+```
+
+脚本模拟：
+- HTTP/1.1：串行请求，总耗时 = 所有请求之和
+- HTTP/2：多路复用，但 TCP 丢包会惩罚所有流（HoL）
+- HTTP/3：流级独立，一个流丢包不影响其他流
+
 ## 核心追问
 
 1. **HTTP/2 的 multiplexing 解决了什么？** 解决了 HTTP/1.1 请求级别的队头阻塞（一个请求等，另一个不能发）
@@ -260,9 +309,9 @@ ECDHE 密钥交换
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| TCP deep dive | done |
-| HTTP versions comparison | done |
-| TLS handshake walkthrough | todo |
-| network troubleshooting playbook | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| TCP deep dive | L2+L3 | done |
+| HTTP versions comparison | **L2+L3** | **done** |
+| TLS handshake walkthrough | L1 | todo |
+| network troubleshooting playbook | L1 | todo |

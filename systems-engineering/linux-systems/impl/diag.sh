@@ -1,6 +1,6 @@
 #!/bin/bash
 # Linux System Diagnostic Toolkit
-# Usage: ./diag.sh [--cpu|--mem|--disk|--net|--proc|--container|--all] [pid]
+# Usage: ./diag.sh [--cpu|--mem|--disk|--net|--proc|--container|--stress|--all] [pid]
 
 set -e
 
@@ -17,6 +17,7 @@ err() { echo -e "${RED}[ERR]${NC} $1"; }
 
 TARGET_PID=""
 MODE="all"
+STRESS=false
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -29,15 +30,20 @@ while [[ $# -gt 0 ]]; do
       MODE="all"
       shift
       ;;
+    --stress)
+      STRESS=true
+      shift
+      ;;
     -h|--help)
-      echo "Usage: $0 [--cpu|--mem|--disk|--net|--proc|--container|--all] [pid]"
-      echo "  --cpu      CPU diagnosis"
-      echo "  --mem      Memory diagnosis"
-      echo "  --disk     Disk I/O diagnosis"
-      echo "  --net      Network diagnosis"
-      echo "  --proc     Process diagnosis"
+      echo "Usage: $0 [--cpu|--mem|--disk|--net|--proc|--container|--stress|--all] [pid]"
+      echo "  --cpu       CPU diagnosis"
+      echo "  --mem       Memory diagnosis"
+      echo "  --disk      Disk I/O diagnosis"
+      echo "  --net       Network diagnosis"
+      echo "  --proc      Process diagnosis"
       echo "  --container Container diagnosis"
-      echo "  --all      Full diagnosis (default)"
+      echo "  --stress    Run stress-ng briefly before diagnosis"
+      echo "  --all       Full diagnosis (default)"
       exit 0
       ;;
     *)
@@ -46,6 +52,16 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+# Optional stress run
+if [[ "$STRESS" == true ]]; then
+  if command -v stress-ng &> /dev/null; then
+    log "Running stress-ng for 5s to generate load..."
+    stress-ng --cpu 2 --io 2 --vm 1 --vm-bytes 128M --timeout 5s || warn "stress-ng failed"
+  else
+    warn "stress-ng not installed; skipping stress phase"
+  fi
+fi
 
 echo "=========================================="
 echo "  Linux System Diagnostic Toolkit"
@@ -200,6 +216,17 @@ diag_proc() {
   fi
 }
 
+# ---- PSI (Pressure Stall Information) ----
+diag_psi() {
+  echo -e "\n${BLUE}=== PRESSURE STALL INFORMATION ===${NC}"
+  for res in cpu memory io; do
+    if [[ -f /proc/pressure/$res ]]; then
+      echo -e "\n${YELLOW}$res pressure${NC}"
+      cat /proc/pressure/$res
+    fi
+  done
+}
+
 # ---- Container Diagnosis ----
 diag_container() {
   echo -e "\n${BLUE}=== CONTAINER DIAGNOSIS ===${NC}"
@@ -215,18 +242,29 @@ diag_container() {
     head -5 /proc/1/cgroup
   fi
 
-  echo -e "\n${YELLOW}2. Memory Limits${NC}"
-  if [[ -d /sys/fs/cgroup/memory ]]; then
+  echo -e "\n${YELLOW}2. Memory Limits (cgroup v1/v2)${NC}"
+  if [[ -f /sys/fs/cgroup/memory/memory.limit_in_bytes ]]; then
+    # v1
     cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null || echo "(not available)"
     cat /sys/fs/cgroup/memory/memory.soft_limit_in_bytes 2>/dev/null || true
     cat /sys/fs/cgroup/memory/memory.oom_control 2>/dev/null || true
+  elif [[ -f /sys/fs/cgroup/memory.max ]]; then
+    # v2
+    cat /sys/fs/cgroup/memory.max 2>/dev/null || echo "(not available)"
+    cat /sys/fs/cgroup/memory.high 2>/dev/null || true
+    cat /sys/fs/cgroup/memory.events 2>/dev/null || true
   fi
 
-  echo -e "\n${YELLOW}3. CPU Limits${NC}"
-  if [[ -d /sys/fs/cgroup/cpu ]]; then
+  echo -e "\n${YELLOW}3. CPU Limits (cgroup v1/v2)${NC}"
+  if [[ -f /sys/fs/cgroup/cpu/cpu.cfs_quota_us ]]; then
+    # v1
     cat /sys/fs/cgroup/cpu/cpu.cfs_quota_us 2>/dev/null || echo "(not available)"
     cat /sys/fs/cgroup/cpu/cpu.cfs_period_us 2>/dev/null || true
     cat /sys/fs/cgroup/cpu/cpu.shares 2>/dev/null || true
+  elif [[ -f /sys/fs/cgroup/cpu.max ]]; then
+    # v2
+    cat /sys/fs/cgroup/cpu.max 2>/dev/null || echo "(not available)"
+    cat /sys/fs/cgroup/cpu.weight 2>/dev/null || true
   fi
 
   echo -e "\n${YELLOW}4. Docker/Container Stats${NC}"
@@ -264,6 +302,7 @@ case $MODE in
     diag_disk
     diag_net
     diag_proc
+    diag_psi
     diag_container
     ;;
 esac

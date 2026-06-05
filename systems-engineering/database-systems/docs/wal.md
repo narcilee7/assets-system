@@ -228,6 +228,58 @@ Fuzzy Checkpoint（现代 InnoDB）：
   - 从 doublewrite buffer 读取备份
 ```
 
+## L2：源码锚定与边界陷阱
+
+### InnoDB 关键函数
+
+| 阶段 | 函数 | 文件 |
+|---|---|---|
+| redo 写入 | `log_write_up_to` | storage/innobase/log/log0log.cc |
+| 事务提交刷盘 | `trx_commit_complete_for_mysql` → `trx_flush_log_if_needed` | storage/innobase/trx/trx0trx.cc |
+| checkpoint | `log_checkpoint` | storage/innobase/log/log0log.cc |
+| 恢复开始 | `recv_recovery_from_checkpoint_start` | storage/innobase/log/log0recv.cc |
+| 重做应用 | `recv_apply_hashed_log_recs` | storage/innobase/log/log0recv.cc |
+| 回滚未提交 | `trx_roll_or_clean_recovered` | storage/innobase/trx/trx0trx.cc |
+| Doublewrite | `buf_dblwr_write_block_to_datafile` | storage/innobase/buf/buf0dblwr.cc |
+
+### `innodb_flush_log_at_trx_commit` 的精确语义
+
+| 值 | 行为 | 崩溃安全 | 性能 |
+|---|---|---|---|
+| 0 | 每秒刷盘（master thread） | 可能丢 1 秒数据 | 最高 |
+| 1 | 每次事务提交 `fsync` redo log | 零数据丢失 | 最低 |
+| 2 | 每次事务提交写入 OS page cache | OS 崩溃可能丢 1 秒数据 | 中等 |
+
+关键区别在 `1` 和 `2`：
+- `1` 调用 `fsync()` 保证 redo log 落盘，但 `fsync` 是 syscall，高并发时成为瓶颈。
+- `2` 只写入 OS buffer，由操作系统决定刷盘时机。如果 **MySQL 进程崩溃但 OS 不崩溃**，数据不会丢；如果 **整台机器掉电**，可能丢 1 秒。
+
+### 边界陷阱
+
+1. **Checkpoint 不保证数据页已落盘**：
+   Fuzzy Checkpoint 只记录一个 LSN，表示“此 LSN 之前的 redo log 所对应的数据页**应该**已落盘”。如果实际没落盘，恢复时 redo 会再次应用（幂等）。
+
+2. **Doublewrite Buffer 不是备份**：
+   它只保护**部分页写入**（16KB 写了一半）。如果整个磁盘损坏，Doublewrite Buffer 也救不了，需要物理备份或 RAID。
+
+3. **Redo log 大小影响写入性能**：
+   redo log 文件（`ib_logfile0/1`）太小会导致频繁 checkpoint，脏页频繁刷盘，I/O 抖动。MySQL 8.0 推荐 `innodb_log_file_size * innodb_log_files_in_group >= 1~2GB`。
+
+## L3：可运行实验
+
+见 `impl/wal_lab/`：
+
+```bash
+cd systems-engineering/database-systems/impl/wal_lab
+python3 wal_simulator.py
+```
+
+脚本模拟：
+- 事务提交 → redo log 落盘
+- Checkpoint 更新 LSN
+- 崩溃丢失内存页
+- 恢复时从 checkpoint LSN 开始 REDO
+
 ## 核心追问
 
 1. **为什么 redo log 写完了就安全？** WAL 原则：数据页刷盘前，对应的 redo log 必须先刷盘。只要 redo log 持久化了，即使数据页还没刷盘，崩溃后也能从 redo log 恢复
@@ -238,10 +290,10 @@ Fuzzy Checkpoint（现代 InnoDB）：
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| B+Tree index deep dive | done |
-| MVCC and isolation levels | done |
-| WAL crash recovery notes | done |
-| slow query diagnosis playbook | todo |
-| replication lag and consistency | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| B+Tree index deep dive | L1 | done |
+| MVCC and isolation levels | L2+L3 | done |
+| WAL crash recovery notes | **L2+L3** | **done** |
+| slow query diagnosis playbook | L2+L3 | done |
+| replication lag and consistency | L1 | todo |

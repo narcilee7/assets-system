@@ -1,0 +1,13 @@
+{
+  "name": "profiling-lab-ts",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "tsx cpu_hog.ts",
+    "prof": "node --prof dist/cpu_hog.js",
+    "prof-process": "node --prof-process isolate-*.log > profile.txt"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}

@@ -12,24 +12,26 @@ fail() { echo "✗ $1"; ((FAIL++)); }
 
 MODE="${1:-all}"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DIAG="$SCRIPT_DIR/impl/diag.sh"
+
 # Test 1: Script exists and is executable
 test_script_exists() {
   echo "=== Test: Script Exists ==="
-  if [[ -x "/Users/Zhuanz/open_source/assets-system/systems-engineering/linux-systems/impl/diag.sh" ]]; then
+  if [[ -x "$DIAG" ]]; then
     pass "diag.sh exists and is executable"
   else
     fail "diag.sh not found or not executable"
     return
   fi
 
-  # Make executable
-  chmod +x "/Users/Zhuanz/open_source/assets-system/systems-engineering/linux-systems/impl/diag.sh"
+  chmod +x "$DIAG"
 }
 
 # Test 2: Help flag works
 test_help() {
   echo -e "\n=== Test: Help Flag ==="
-  output=$(/Users/Zhuanz/open_source/assets-system/systems-engineering/linux-systems/impl/diag.sh --help 2>&1)
+  output=$($DIAG --help 2>&1)
   if echo "$output" | grep -q "Usage:"; then
     pass "--help shows usage"
   else
@@ -40,8 +42,9 @@ test_help() {
 # Test 3: Script runs without crashing
 test_script_runs() {
   echo -e "\n=== Test: Script Runs (CPU mode, 2s max) ==="
-  timeout 5 /Users/Zhuanz/open_source/assets-system/systems-engineering/linux-systems/impl/diag.sh --cpu > /dev/null 2>&1
-  if [[ $? -eq 0 ]] || [[ $? -eq 124 ]]; then  # 124 = timeout
+  timeout 5 $DIAG --cpu > /dev/null 2>&1
+  rc=$?
+  if [[ $rc -eq 0 ]] || [[ $rc -eq 124 ]]; then  # 124 = timeout
     pass "diag.sh --cpu runs without crash"
   else
     fail "diag.sh --cpu crashed"
@@ -52,8 +55,9 @@ test_script_runs() {
 test_modes() {
   echo -e "\n=== Test: All Modes ==="
   for mode in cpu mem disk net proc container; do
-    timeout 5 /Users/Zhuanz/open_source/assets-system/systems-engineering/linux-systems/impl/diag.sh --$mode > /dev/null 2>&1
-    if [[ $? -eq 0 ]] || [[ $? -eq 124 ]]; then
+    timeout 5 $DIAG --$mode > /dev/null 2>&1
+    rc=$?
+    if [[ $rc -eq 0 ]] || [[ $rc -eq 124 ]]; then
       pass "--$mode runs"
     else
       fail "--$mode crashed"
@@ -64,7 +68,7 @@ test_modes() {
 # Test 5: Checks expected output sections
 test_output_sections() {
   echo -e "\n=== Test: Output Contains Expected Sections ==="
-  output=$(/Users/Zhuanz/open_source/assets-system/systems-engineering/linux-systems/impl/diag.sh --cpu 2>&1)
+  output=$($DIAG --cpu 2>&1)
 
   checks=("CPU DIAGNOSIS" "Load Average" "Top CPU Processes")
   for check in "${checks[@]}"; do
@@ -79,7 +83,7 @@ test_output_sections() {
 # Test 6: Memory mode has expected sections
 test_mem_output() {
   echo -e "\n=== Test: Memory Mode Output ==="
-  output=$(/Users/Zhuanz/open_source/assets-system/systems-engineering/linux-systems/impl/diag.sh --mem 2>&1)
+  output=$($DIAG --mem 2>&1)
 
   checks=("MEMORY DIAGNOSIS" "MemAvailable" "Swap")
   for check in "${checks[@]}"; do
@@ -94,7 +98,7 @@ test_mem_output() {
 # Test 7: Network mode has expected sections
 test_net_output() {
   echo -e "\n=== Test: Network Mode Output ==="
-  output=$(/Users/Zhuanz/open_source/assets-system/systems-engineering/linux-systems/impl/diag.sh --net 2>&1)
+  output=$($DIAG --net 2>&1)
 
   checks=("NETWORK DIAGNOSIS" "Socket Statistics" "TIME_WAIT")
   for check in "${checks[@]}"; do
@@ -109,7 +113,7 @@ test_net_output() {
 # Test 8: Disk mode has expected sections
 test_disk_output() {
   echo -e "\n=== Test: Disk Mode Output ==="
-  output=$(/Users/Zhuanz/open_source/assets-system/systems-engineering/linux-systems/impl/diag.sh --disk 2>&1)
+  output=$($DIAG --disk 2>&1)
 
   checks=("DISK I/O DIAGNOSIS" "Filesystem" "I/O by Process")
   for check in "${checks[@]}"; do
@@ -119,6 +123,30 @@ test_disk_output() {
       fail "Missing: $check"
     fi
   done
+}
+
+# Test 9: PSI section present on modern kernels
+test_psi_output() {
+  echo -e "\n=== Test: PSI Section ==="
+  output=$($DIAG --all 2>&1)
+  if echo "$output" | grep -q "PRESSURE STALL INFORMATION"; then
+    pass "PSI section present"
+  else
+    warn "PSI section missing (may require Linux 4.20+)"
+  fi
+}
+
+# Test 10: Go diag binary builds
+test_go_diag() {
+  echo -e "\n=== Test: Go diag_go builds ==="
+  pushd "$SCRIPT_DIR/impl/diag_go" > /dev/null
+  if go build -o diag_go diag.go 2>/dev/null; then
+    pass "diag_go builds"
+    ./diag_go > /dev/null 2>&1 && pass "diag_go runs" || warn "diag_go runtime failed (expected on non-Linux)"
+  else
+    warn "diag_go build failed (expected on non-Linux)"
+  fi
+  popd > /dev/null
 }
 
 # Run tests
@@ -136,6 +164,8 @@ if [[ "$MODE" == "all" ]]; then
   test_mem_output
   test_net_output
   test_disk_output
+  test_psi_output
+  test_go_diag
 fi
 
 echo -e "\n=========================================="
