@@ -208,6 +208,66 @@ ON DUPLICATE KEY UPDATE ...;
 | ZooKeeper | 强 | 中 | 否（临时节点） | 是 | 强一致需求，金融级 |
 | 数据库 | 强 | 低 | 否 | 否 | 简单场景，不追求性能 |
 
+## L2：源码锚定与边界陷阱
+
+### 源码锚定
+
+| 实现 | 关键源码/命令 | 说明 |
+|---|---|---|
+| Redis SET NX | `t_string.c` 中 `setGenericCommand` | `NX` 在 key 不存在时通过 `lookupKeyWrite` 检查后原子写入；Lua 释放锁用 `EVAL` 保证 get+del 原子性 |
+| Redis RedLock | `redlock.c`（redis 源码中无内置实现，参考 antirez/redlock-py） | 核心逻辑：向 N 个实例获取锁，成功数 ≥ N/2+1 且总耗时 < TTL；有效时间 = TTL - 获取耗时 |
+| ZooKeeper 临时有序节点 | `DataTree.java` 中 `createNode`（ephemeral + sequential flag） | session 断开时 `killSession` 遍历 ephemeral map 删除节点；watcher 通知前一个节点删除事件 |
+| etcd CAS | `mvcc/kvstore_txn.go` 中 `Txn` | 基于 revision 的 Compare-And-Swap；事务内可组合多个 compare + success/fail 操作 |
+| Redisson Watchdog | `RedissonLock.java` 中 `scheduleExpirationRenewal` | 启动 `TimerTask` 每 `lockWatchdogTimeout/3`（默认 10s）续期；只有持有锁的线程能续期 |
+
+### 边界陷阱
+
+1. **Redis 主从异步复制丢锁**：主节点写锁成功后立即宕机，锁未同步到从节点；从节点晋升后新客户端可获取同一把锁。RedLock 不解决单实例故障，只降低概率
+2. **时钟跳变摧毁 RedLock**：某实例时钟快跳 10s，其锁提前过期，其他实例仍认为锁有效；NTP 同步不能杜绝闰秒、手动调时
+3. **客户端 GC pause 超过 TTL**：Java 应用 STW 30s，看门狗线程暂停，锁在 Redis 中已过期，但客户端仍认为持有锁，继续操作产生竞态
+4. **看门狗在客户端崩溃后"永久锁"**：客户端获取锁后进程崩溃（非优雅退出），看门狗停止，锁按 TTL 自动释放；但如果 TTL 设得很长（如 5 分钟），故障期间其他客户端长时间阻塞
+5. **RedLock 的 fencing token 缺失**：客户端 A 获取锁后写请求延迟，锁过期后客户端 B 获取锁并写入，A 的延迟写到达后覆盖 B 的数据；RedLock 没有单调递增 token 供存储层校验
+6. **ZooKeeper 的羊群效应**：大量客户端同时监听最小节点，最小节点删除时所有客户端同时唤醒争抢；Curator 的 `InterProcessMutex` 通过监听前一个节点而非最小节点来缓解
+7. **ZooKeeper session timeout 误判**：客户端与 ZK 集群网络闪断，session timeout 内重连成功则保持锁；timeout 外重连则 session 过期锁释放，但客户端本地可能未及时感知
+8. **脑裂导致 Redis Sentinel 双主**：Sentinel 配置 `min-slaves-to-write` 不当或网络分区时，两个分区各选举出一个 master，两边客户端都能获取锁
+
+## L3：可运行实验
+
+> 实验目录：`systems-engineering/distributed-systems/impl/dlock_lab/`
+
+### 实验 1：Redis 单实例锁（含 TTL 与误删）
+
+```bash
+cd systems-engineering/distributed-systems/impl/dlock_lab
+python3 redis_lock.py --ttl 5 --task-time 8
+```
+
+模拟 Redis 单实例锁：任务执行时间 8s 超过 TTL 5s，锁提前释放后其他客户端获取锁，展示并发冲突。对比加入看门狗续期后的安全性。
+
+### 实验 2：RedLock 多数派模拟
+
+```bash
+python3 redlock_sim.py --nodes 5 --quorum 3 --delay 0.1 --ttl 10
+```
+
+模拟 5 个 Redis 节点，客户端依次请求加锁，引入网络延迟；统计成功获取多数派的比例，以及因超时而判定失败的案例。
+
+### 实验 3：ZooKeeper 临时有序锁
+
+```bash
+python3 zk_lock.py --clients 5 --contention 100
+```
+
+用本地文件系统模拟 ZK 临时有序节点：每个客户端创建临时文件，按文件名排序获取锁，监听前一个节点删除事件；统计公平性（FIFO 顺序）和羊群效应程度。
+
+### 实验 4：Fencing Token 保护写入
+
+```bash
+python3 fencing_token.py --delay 2
+```
+
+模拟 fencing token 场景：客户端 A 获取锁（token=1）后延迟写入，锁过期后客户端 B 获取锁（token=2）并写入；存储层拒绝 token=1 的延迟写，防止数据覆盖。
+
 ## 核心追问
 
 1. **为什么 Redis 单点锁不够可靠？** 主从切换时锁可能丢失，需要 RedLock 或其他方案
@@ -224,10 +284,10 @@ ON DUPLICATE KEY UPDATE ...;
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| Raft walkthrough | done |
-| distributed lock critique | done |
-| message delivery semantics | todo |
-| sharding and rebalance playbook | todo |
-| consistency model comparison | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| Raft walkthrough | L3 | done |
+| distributed lock critique | L3 | done |
+| message delivery semantics | L1 | todo |
+| sharding and rebalance playbook | L1 | todo |
+| consistency model comparison | L1 | todo |
