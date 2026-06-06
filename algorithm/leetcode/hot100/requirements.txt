@@ -1,0 +1,2 @@
+# Python: run with python {file}.py or python -m pytest
+# No external dependencies needed for most solutions
