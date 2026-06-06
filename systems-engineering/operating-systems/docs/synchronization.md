@@ -317,6 +317,110 @@ void atomic_inc(atomic_t *v) {
 | 高频计数、队列 | atomic / CAS | 无锁，高吞吐 |
 | 单生产者单消费者 | ring buffer + memory barrier | 零锁开销 |
 
+## L2：futex 与内核锁源码锚定
+
+### futex（Fast Userspace muTEX）源码
+
+```c
+// kernel/futex.c: do_futex()
+// futex 系统调用入口
+static int do_futex(u32 __user *uaddr, int op, u32 val, ...)
+{
+    switch (op) {
+    case FUTEX_WAIT:
+        // 用户态 CAS 失败后进内核等待
+        // 将当前任务加入 futex 哈希桶的等待队列
+        return futex_wait(uaddr, flags, val, timeout, mask, flags);
+    case FUTEX_WAKE:
+        // 唤醒等待队列中的任务
+        return futex_wake(uaddr, flags, nr, mask, flags);
+    }
+}
+```
+
+**futex 哈希桶**：
+- 内核维护 `futex_hash_bucket` 数组（默认 256 个桶）。
+- 键 = 用户态虚拟地址 `uaddr` + `mm`（地址空间）。
+- 同一地址上的竞争线程挂到同一个等待队列。
+
+**无竞争 vs 有竞争的路径**：
+```
+无竞争：
+  用户态：atomic_dec(&lock) → 成功，进入临界区
+  内核：零介入
+
+有竞争：
+  用户态：atomic_dec(&lock) → 失败（值已为 0）
+  用户态：syscall(FUTEX_WAIT, &lock, 0)
+  内核：将线程加入 futex 等待队列，调度出去
+  释放者：syscall(FUTEX_WAKE, &lock, 1)
+  内核：从等待队列唤醒一个线程
+```
+
+### glibc pthread_mutex 实现
+
+```c
+// glibc/nptl/pthread_mutex_lock.c: __pthread_mutex_lock()
+int __pthread_mutex_lock(pthread_mutex_t *mutex) {
+    // 1. 尝试原子操作获取锁（LL/SC 或 CMPXCHG）
+    if (LLWORD(&mutex->__data.__lock) == 0
+        && atomic_compare_and_exchange_bool_acq(&mutex->__data.__lock, 1, 0) == 0)
+        return 0;  // 获取成功
+    
+    // 2. 失败：进入慢路径，调用 lll_lock_wait()
+    //    lll = low-level lock，内部使用 futex
+    return lll_lock_wait(&mutex->__data.__lock, mutex->__data.__owner);
+}
+```
+
+### Linux qspinlock（排队自旋锁，x86-64）
+
+```c
+// kernel/locking/qspinlock.c: queued_spin_lock_slowpath()
+// 用于内核的排队自旋锁，避免 CAS 风暴
+void queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
+{
+    // MCS 锁队列：每个 CPU 在本地节点上自旋，不抢全局锁
+    // tail 指针指向最后一个等待的 CPU
+    // 解锁时只需唤醒下一个节点，无需广播
+}
+```
+
+**qspinlock 优势**：
+- 传统 ticket spinlock：所有 CPU 抢同一个全局变量 → cache line bouncing。
+- qspinlock（MCS 变体）：每个 CPU 在本地变量自旋 → 释放时只更新下一个 CPU 的 cache line。
+
+### 数字锚定：锁操作延迟
+
+| 操作 | 延迟 | 条件 |
+|---|---|---|
+| 无竞争 mutex lock | ~10-20 ns | 纯用户态 CAS |
+| 有竞争 mutex lock（进入内核） | ~1-3 μs | futex_wait + 调度 |
+| 内核 spinlock | ~20-50 ns | 单 CPU 本地自旋 |
+| 跨 socket spinlock | ~200-500 ns | 远程 cache line 传输 |
+| CAS 失败自旋 | ~10-20 ns/次 | 取决于竞争程度 |
+
+### 边界陷阱
+
+1. **futex 的 thundering herd**：早期实现中 `FUTEX_WAKE` 唤醒所有等待者，导致多个线程同时竞争。现代 glibc 使用 `FUTEX_WAKE_OP` 和 `FUTEX_REQUEUE` 减少 herd。
+2. **优先级反转**：高优先级线程等待低优先级线程持有的锁，低优先级线程被中等优先级线程抢占 → 高优先级线程永远等不到。解决：优先级继承（PI-futex，glibc 2.27+ 默认启用）。
+3. **条件变量的虚假唤醒（Spurious Wakeup）**：`pthread_cond_wait` 可能在没有 `signal` 的情况下返回（内核实现原因）。必须用 `while (!condition)` 而非 `if (!condition)` 包裹。
+4. **RWLock 的写者饥饿**：Linux `pthread_rwlock` 默认是"写者优先"，但某些实现（如早期 glibc）是读者优先，导致写者饿死。
+
+## L3：可运行实验
+
+见 `impl/sync_lab/`：
+
+```bash
+cd systems-engineering/operating-systems/impl/sync_lab
+python3 lock_contention.py --workers 8 --iterations 100000
+```
+
+实验覆盖：
+- 单线程基线 vs 高竞争 mutex 的吞吐量对比
+- 读多写少场景的 RWLock 效果
+- 分片计数器（无共享锁）的性能优势
+
 ## 核心追问
 
 1. **mutex 和 binary semaphore 的本质区别？** mutex 有所有权（只有持有者能释放），semaphore 没有（任何人都能 signal）
@@ -327,10 +431,10 @@ void atomic_inc(atomic_t *v) {
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| process vs thread notes | done |
-| virtual memory deep dive | done |
-| epoll and event loop bridge | done |
-| file system and page cache | done |
-| lock primitives comparison | done |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| process vs thread notes | L2+L3 | done |
+| virtual memory deep dive | L2+L3 | done |
+| epoll and event loop bridge | L2+L3 | done |
+| file system and page cache | L2+L3 | done |
+| lock primitives comparison | **L2+L3** | **done** |

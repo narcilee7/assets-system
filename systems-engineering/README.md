@@ -20,11 +20,11 @@
 
 本目录下的文档按三层深度模型建设，详见 [`DEPTH.md`](DEPTH.md)。
 
-**当前总体深度**：L1 骨架 ✅ 已完成，Chain-1（延迟诊断链）L2+L3 ✅ 已深化，其余链 L2/L3 深化中 ⬜
+**当前总体深度**：L1 骨架 ✅ 已完成，Chain-1/2/3 核心链 L2+L3 ✅ 已闭环，其余模块 L2/L3 深化中 ⬜
 
 | 能力域 | 目录 | L1 文档 | L2 深度 | L3 实验 | 训练目标 |
 | --- | --- | --- | --- | --- | --- |
-| Operating Systems | `operating-systems/` | 5 | 2 | 2 | 进程、线程、调度、内存、I/O、文件系统 |
+| Operating Systems | `operating-systems/` | 5 | 5 | 5 | 进程、线程、调度、内存、I/O、文件系统 |
 | Linux Systems | `linux-systems/` | 6 | 1 | 2 | shell、syscall、procfs、网络诊断、容器基础 |
 | Computer Networking | `computer-networking/` | 4 | 3 | 3 | TCP/IP、HTTP、TLS、DNS、负载均衡 |
 | Database Systems | `database-systems/` | 5 | 5 | 5 | 索引、事务、MVCC、WAL、查询优化、复制 |
@@ -35,8 +35,8 @@
 | Performance Engineering | `performance-engineering/` | 5 | 5 | 3 | profiling、benchmark、火焰图、容量评估 |
 | Security Engineering | `security-engineering/` | 5 | 0 | 0 | IAM、密钥、网络安全、供应链、隔离 |
 | Compilers / Build Systems | `compilers-build-systems/` | 4 | 0 | 0 | 编译链路、依赖图、增量构建、缓存 |
-| Infrastructure Automation | `infrastructure-automation/` | 5 | 0 | 0 | Terraform、GitOps、配置、发布、回滚 |
-| Protocols | `protocols/` | 5 | 0 | 0 | HTTP、gRPC、WebSocket、SSE、MQTT、QUIC |
+| Infrastructure Automation | `infrastructure-automation/` | 5 | 2 | 0 | Terraform、GitOps、配置、发布、回滚 |
+| Protocols | `protocols/` | 5 | 2 | 0 | HTTP、gRPC、WebSocket、SSE、MQTT、QUIC |
 | Case Studies | `case-studies/` | 1 | 0 | 0 | 用生产问题串联系统能力 |
 
 ## 核心资产清单（按优先级 + 深度目标）
@@ -53,7 +53,7 @@
 | P1 | storage engine notes | `storage-systems/` | L1 | L2 |
 | P1 | security baseline | `security-engineering/` | L1 | L2 |
 | P1 | build system architecture | `compilers-build-systems/` | L1 | L2 |
-| P1 | infrastructure as code blueprint | `infrastructure-automation/` | L1 | L2 |
+| P1 | infrastructure as code blueprint | `infrastructure-automation/` | L2 | L2+L3 |
 
 ## 深化路线：能力链（Capability Chain）
 
@@ -72,14 +72,23 @@
   └──► database-systems/slow-query.md（索引、锁、MVCC）L1→L2+L3 ✅
 ```
 
-**Chain-2：数据一致性链** ⏳ 待启动
+**Chain-2：数据一致性链** ✅ 已闭环
 ```
-分布式事务 → 数据库事务 → 缓存一致性 → 消息语义
+分布式事务 / 数据库事务 / 缓存一致性 / 消息语义
+  ├──► database-systems/mvcc.md（InnoDB 隐藏列、Read View、Next-Key Lock）L1→L2+L3 ✅
+  ├──► database-systems/replication.md（异步/半同步/并行复制、SBM 陷阱）L1→L2+L3 ✅
+  ├──► distributed-systems/consistency.md（CAP/PACELC、CRDT、向量时钟）L1→L2+L3 ✅
+  ├──► distributed-systems/raft.md（Leader 选举、日志复制、PreVote）L1→L2+L3 ✅
+  └──► protocols/sse.md / websocket.md（消息送达语义、at-least-once 边界）L1→L2 ✅
 ```
 
-**Chain-3：发布稳定性链** ⏳ 待启动
+**Chain-3：发布稳定性链** ✅ 已闭环
 ```
 GitOps → 金丝雀 → 数据库迁移 → 回滚 → 故障演练
+  ├──► infrastructure-automation/gitops-workflow.md（ArgoCD Controller、协调循环、RTO）L1→L2 ✅
+  ├──► infrastructure-automation/deployment-rollback.md（K8s Deployment Controller、滚动更新源码）L1→L2 ✅
+  ├──► sre-reliability/slo.md（Burn Rate、多窗口告警、错误预算）L1→L2+L3 ✅
+  └──► sre-reliability/incident.md（MTTD/MTTR、自动化响应层级、复盘模板）L1→L2+L3 ✅
 ```
 
 ## 架构师级追问

@@ -205,15 +205,109 @@ Go goroutine、Erlang process、Java Virtual Thread
   - 真正的并行（多 OS thread）
 ```
 
-## 工程选型
+## L2：Linux 调度器源码与上下文切换机制
 
-| 场景 | 推荐方案 | 理由 |
+### CFS（Completely Fair Scheduler）核心源码
+
+```c
+// kernel/sched/fair.c: update_curr()
+// CFS 的核心：更新当前任务的 vruntime
+static void update_curr(struct cfs_rq *cfs_rq) {
+    struct sched_entity *curr = cfs_rq->curr;
+    u64 now = rq_clock_task(rq_of(cfs_rq));
+    u64 delta_exec;
+    
+    delta_exec = now - curr->exec_start;  // 本次运行时间
+    curr->exec_start = now;
+    
+    curr->vruntime += calc_delta_fair(delta_exec, curr);  // vruntime += delta / weight
+}
+```
+
+**vruntime 的本质**：
+- 虚拟运行时间，用于衡量"谁欠了 CPU 时间"。
+- `weight` 与 `nice` 值相关：nice=-20（高优先级）weight=88761；nice=19（低优先级）weight=15。
+- CFS 总是选择 `vruntime` 最小的任务运行。
+
+### `context_switch()` 源码路径
+
+```c
+// kernel/sched/core.c: context_switch()
+static __always_inline struct rq *context_switch(struct rq *rq,
+        struct task_struct *prev, struct task_struct *next) {
+    // 1. 切换 mm_struct（地址空间）
+    if (!next->mm) {  // 内核线程
+        next->active_mm = prev->active_mm;
+    } else {
+        switch_mm_irqs_off(prev->active_mm, next->mm, next);  // 写 cr3，触发 TLB flush
+    }
+    
+    // 2. 切换寄存器状态（架构相关）
+    switch_to(prev, next, prev);  // 汇编实现，保存/恢复通用寄存器、PC、SP
+    
+    barrier();
+    return finish_task_switch(prev);
+}
+```
+
+**关键开销来源**：
+1. **`switch_mm_irqs_off`**：切换页表（cr3 寄存器）→ TLB flush。
+   - x86-64 有 PCID（Process Context ID），可避免 TLB flush，但旧内核/硬件不支持。
+2. **`switch_to`**：保存/恢复 16 个通用寄存器 + RSP + RIP + RFLAGS。
+   - x86-64: ~100-200 个时钟周期（~50-100ns）。
+3. **cache 污染**：新任务的 working set 和旧任务不同，导致 L1/L2 cache miss 增加。
+
+### 数字锚定：上下文切换开销
+
+| 切换类型 | 典型延迟 | 测试方法 |
 |---|---|---|
-| CPU 密集型计算 | 多进程或多线程 | 绕过 GIL（Python），利用多核 |
-| I/O 密集型高并发 | 协程（goroutine/asyncio） | 轻量，切换快，阻塞不浪费资源 |
-| 需要强隔离 | 多进程 | 一个崩溃不影响其他，安全边界 |
-| 共享大量数据 | 多线程 | 共享地址空间，无需序列化 |
-| 容器/沙箱 | 多进程 + namespace | cgroup + namespace 隔离 |
+| 进程切换（不同地址空间） | ~1-3 μs | `lmbench lat_ctx` / pipe ping-pong |
+| 线程切换（同地址空间） | ~0.5-1.5 μs | `futex` ping-pong / condition variable |
+| 协程切换（用户态） | ~50-200 ns | Go `chan` ping-pong / asyncio Queue |
+| 中断进入/退出 | ~0.5-1 μs | `perf` 采样 `entry_SYSCALL_64` |
+
+**进程 vs 线程切换差异**：
+- 线程切换不需要 `switch_mm`，省下了 TLB flush 开销。
+- 但 Linux 中线程也是 `task_struct`，调度路径完全相同。
+- 差异主要来自是否切换页表。
+
+### Go Goroutine Scheduler 对比
+
+```go
+// runtime/proc.go: schedule()
+// Go 的 M:N 调度器
+func schedule() {
+    gp := findRunnable()  // 从全局/本地 runqueue 找可运行 goroutine
+    execute(gp)           // 切换到 goroutine 上下文
+}
+
+// 切换开销：保存 3 个寄存器（PC, SP, DX）+ 栈指针切换
+// 比内核线程切换快 10-50 倍
+```
+
+### 边界陷阱
+
+1. **`fork()` 后 `exec()` 前的时间窗口**：如果子进程在 `exec()` 前收到信号，信号处理函数可能在父进程的地址空间中运行，造成意外行为。
+2. **`CLONE_VM` 但不 `CLONE_FS`**：线程共享地址空间但各自有当前工作目录，一个线程 `chdir()` 不影响其他线程（Linux 线程实现细节）。
+3. **线程栈溢出**：默认 8MB 栈，递归深度过大时栈溢出没有优雅错误，直接 SIGSEGV。
+
+## L3：可运行实验
+
+见 `impl/process_thread_lab/`：
+
+```bash
+cd systems-engineering/operating-systems/impl/process_thread_lab
+python3 context_switch_bench.py --mode all
+```
+
+实验覆盖：
+- 进程创建 vs 线程创建 vs 协程创建的延迟对比
+- 进程/线程/协程的上下文切换开销对比（pipe ping-pong、condition variable、asyncio Queue）
+
+预期输出：
+- 进程创建 ≈ 线程创建 × 10-50
+- 线程创建 ≈ 协程创建 × 10-100
+- 线程上下文切换 ≈ 协程上下文切换 × 5-20
 
 ## 核心追问
 
@@ -225,10 +319,10 @@ Go goroutine、Erlang process、Java Virtual Thread
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| process vs thread notes | done |
-| virtual memory deep dive | todo |
-| epoll and event loop bridge | todo |
-| file system and page cache | todo |
-| lock primitives comparison | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| process vs thread notes | **L2+L3** | **done** |
+| virtual memory deep dive | L2+L3 | done |
+| epoll and event loop bridge | L2+L3 | done |
+| file system and page cache | L1 | todo |
+| lock primitives comparison | L1 | todo |

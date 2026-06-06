@@ -304,6 +304,91 @@ Crash 恢复：
   - 重放（replay）日志，保证元数据一致
 ```
 
+## L2：VFS 与 Page Cache 源码锚定
+
+### VFS 打开文件路径（Linux 5.10+）
+
+```c
+// fs/namei.c: path_openat()
+// 用户态 open() 的内核入口
+static struct file *path_openat(...)
+{
+    // 1. 路径解析：/a/b/c → 逐级查找 dentry cache
+    //    fs/namei.c: link_path_walk()
+    //    每级先在 dentry cache（dcache）中查找，miss 则读磁盘目录块
+    
+    // 2. 找到 inode 后，调用 inode->i_op->lookup()
+    //    ext4: fs/ext4/namei.c: ext4_lookup()
+    
+    // 3. 创建 file 结构体，绑定 file_operations
+    //    ext4: fs/ext4/file.c: ext4_file_operations
+}
+```
+
+**Dentry Cache 的哈希结构**：
+- 全局哈希表 `dentry_hashtable`，键 = `(parent_dentry, name)`。
+- 命中时 O(1)，miss 时需要逐级读取磁盘（路径深度 × 磁盘 I/O）。
+- `dcache` 大小由 `vfs_cache_pressure` 控制（默认 100），内存紧张时回收。
+
+### Page Cache 核心源码
+
+```c
+// mm/filemap.c: generic_file_read_iter()
+// 文件读取的通用路径
+ssize_t generic_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
+{
+    // 1. 查找 page cache：find_get_page(mapping, index)
+    //    mapping = address_space，index = 文件偏移 >> PAGE_SHIFT
+    
+    // 2. 命中：直接拷贝到用户态（zero-copy 如果支持）
+    //    miss：调用 mapping->a_ops->readpage() 从磁盘读取
+    
+    // 3. 预读：page_cache_async_readahead()
+    //    顺序读取时，内核预加载后续 page
+}
+
+// mm/page-writeback.c: wb_writeback()
+// dirty page 回写线程
+static long wb_writeback(struct bdi_writeback *wb, ...)
+{
+    // 定期扫描 inode 的 dirty page
+    // 通过 /proc/sys/vm/dirty_expire_centisecs 控制（默认 3000 = 30s）
+    // 通过 /proc/sys/vm/dirty_ratio 控制脏页上限（默认 20%）
+}
+```
+
+### 数字锚定：I/O 路径延迟
+
+| 操作 | 延迟 | 出处 |
+|---|---|---|
+| Dentry Cache 命中 | ~100 ns | 纯内存哈希查找 |
+| Dentry Cache miss（读磁盘目录块） | ~10-100 μs | NVMe 随机读 |
+| Page Cache 命中 | ~200 ns-1 μs | 内存拷贝 |
+| Page Cache miss（NVMe 读） | ~50-100 μs | `fio` randread |
+| Page Cache miss（HDD 读） | ~5-10 ms | 寻道 + 旋转延迟 |
+| fsync()（SSD） | ~0.5-2 ms | `io_uring` fsync bench |
+| fsync()（HDD） | ~5-20 ms | 机械磁盘延迟 |
+
+### `O_DIRECT` 的边界陷阱
+
+1. **对齐要求**：缓冲区起始地址和长度都必须对齐到磁盘扇区大小（通常 512B 或 4KB）。不对齐的 `O_DIRECT` 会返回 `EINVAL`。
+2. **绕过 page cache ≠ 绕过磁盘缓存**：SSD 的控制器缓存仍然可能延迟刷盘，需要 `fsync()` 或设置磁盘 write-through 模式。
+3. **顺序读性能下降**：`O_DIRECT` 失去了内核的预读（readahead）优化，顺序读取大文件时性能可能比 buffered I/O 差 2-5 倍。
+
+## L3：可运行实验
+
+见 `impl/file_system_lab/`：
+
+```bash
+cd systems-engineering/operating-systems/impl/file_system_lab
+python3 page_cache_bench.py --file /tmp/test_io.bin --size-mb 100
+```
+
+实验覆盖：
+- Buffered I/O vs O_DIRECT 的写吞吐对比
+- fsync 延迟分布（mean / P50 / P99）
+- 冷缓存 vs 热缓存的读取速度对比
+
 ## 核心追问
 
 1. **为什么删除大文件后 df 不立即显示空间释放？** 有进程仍持有该文件的 fd，inode 的 i_links_count 未归零，数据块未释放
@@ -314,10 +399,10 @@ Crash 恢复：
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| process vs thread notes | done |
-| virtual memory deep dive | done |
-| epoll and event loop bridge | done |
-| file system and page cache | done |
-| lock primitives comparison | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| process vs thread notes | L2+L3 | done |
+| virtual memory deep dive | L2+L3 | done |
+| epoll and event loop bridge | L2+L3 | done |
+| file system and page cache | **L2+L3** | **done** |
+| lock primitives comparison | L1 | todo |
