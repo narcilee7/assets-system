@@ -28,7 +28,7 @@
 | P0 | Python asset standard | `language/python/` | tested | 现有测试可跑，最适合作为资产样板 |
 | P0 | Backend architecture model | `engineering/backend/` | seed | 架构师主线核心，连接系统设计和 AI Backend |
 | P0 | Frontend architecture model | `engineering/frontend/` | seed | 补齐 Framework、工程化、跨端和前端平台能力 |
-| P0 | Systems engineering foundation | `systems-engineering/` | seed | 从 Web 工程扩展到系统工程师范畴 |
+| P0 | Systems engineering foundation | `systems-engineering/` | draft | Chain-1（延迟诊断链）已闭环 L2+L3，Chain-2/3 待启动 |
 | P0 | AI model system map | `artificial-intelligence/` | seed | 建立 LLM、VLM、Post-training、推理和评估认知 |
 
 ## 阶段 2：资产化队列
