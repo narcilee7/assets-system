@@ -208,6 +208,134 @@ def verify_improvement(
     }
 ```
 
+## L2 深挖：压测工具并发模型与 Coordinated Omission
+
+### 主流工具并发模型源码锚定
+
+| 工具 | 语言 | 并发模型 | 关键源码 | 适用场景 |
+|---|---|---|---|---|
+| **wrk** | C | 每线程一个 epoll/kqueue event loop，预先创建固定连接池 | `wrk.c:thread_main()` → `ae_epoll.c:aeApiPoll()`（类似 Redis 的 ae 事件库） | 超高 QPS 基准测试（单核 100K+ QPS） |
+| **k6** | Go | 每个 VU 一个 goroutine，JS 脚本在 `dop251/goja` 引擎中运行 | `core/engine.go:Run()` → `js/runner.go:runVU()` → `goja.Runtime.RunProgram()` | 复杂业务场景压测（session、cookie、动态参数） |
+| **JMeter** | Java | 每个线程一个 `ThreadGroup`，阻塞式 HTTP 客户端 | `core/JMeterThread.java:run()` → `protocol/http/sampler/HTTPSamplerBase.java` | 协议多样性（JDBC、JMS、SOAP） |
+| **Locust** | Python | gevent（协程）或 asyncio，每个 user 一个 greenlet/task | `runners.py:LocalRunner.spawn_users()` → `user/task.py:run()` | 快速编写复杂用户行为 |
+
+**wrk 为什么是单进程压测的标杆？**
+
+```c
+// wrk 核心线程逻辑（简化自 wrk.c + ae.c）
+void *thread_main(void *arg) {
+    thread *t = arg;
+    aeEventLoop *loop = aeCreateEventLoop(1024);
+    // 预先创建所有连接，避免压测中途建连开销
+    for (int i = 0; i < t->connections; i++) {
+        connection *c = calloc(1, sizeof(connection));
+        aeCreateFileEvent(loop, c->fd, AE_WRITABLE, socket_writeable, c);
+    }
+    // event loop：写请求 -> 等可读 -> 读响应 -> 统计 -> 再写
+    while (!t->stop) {
+        aeProcessEvents(loop, AE_ALL_EVENTS);
+    }
+}
+```
+
+wrk 的**连接预热**设计：压测开始前就把所有 TCP 连接建立好（`--latency` 还会做连接建立时间的独立统计），因此测出的 QPS 是纯请求处理 QPS，不含三次握手开销。
+
+### 数字锚定：压测工具自身开销
+
+```
+测试条件：localhost, 128B payload, 单核 CPU 限制
+
+工具                最大 QPS     工具自身 CPU 占用
+─────────────────────────────────────────────────────
+wrk (1 thread)      ~120,000     ~80%  （接近单核极限）
+wrk (4 threads)     ~400,000     ~300% （多核扩展性好）
+hey (Go)            ~80,000      ~90%
+k6 (1 VU)           ~5,000       ~10%  （VU 开销在 goja JS 引擎）
+Locust (async)      ~3,000       ~40%  （Python GIL 限制）
+Python asyncio      ~15,000      ~60%  （aiohttp client 纯异步）
+```
+
+关键结论：
+- **wrk 的瓶颈在目标服务，不在工具本身**（C + epoll + 零拷贝发送）。
+- **k6 的 VU 模式适合业务逻辑，但单 VU QPS 上限低**；需要大量 VU（>1000）才能达到高并发。
+- **Python 压测适合快速原型，不适合极限 QPS**；aiohttp client 比 requests 快 10x 以上。
+
+### Coordinated Omission（协同遗漏）
+
+**问题定义**：
+
+很多压测工具使用 **Closed Model**（固定并发用户，发完请求等响应回来再发下一个）。当目标服务变慢时，客户端会自动"配合"减速——等待响应期间不会发送新请求。这导致测出的延迟分布比真实用户感受到的**更乐观**。
+
+```
+真实用户视角（Open Model）：
+  用户按固定节奏发请求，不管上一个是否回来
+  t=0ms  发请求1 -> 服务端处理 100ms -> 用户感受到 100ms
+  t=10ms 发请求2 -> 服务端已慢，排队 90ms + 处理 100ms = 190ms
+  t=20ms 发请求3 -> 排队 180ms + 处理 100ms = 280ms
+  测出的 P99 = 280ms
+
+Closed Model 压测视角（200 并发）：
+  worker1 发请求1 -> 等待 100ms -> 收到响应 -> 发请求2
+  worker2 发请求1 -> 等待 100ms -> 收到响应 -> 发请求2
+  ...
+  服务端始终只有 200 个并发请求，不会堆积
+  测出的 P99 = 100ms  （严重低估！）
+```
+
+**检测方法**：
+
+1. 对比 Open Model 和 Closed Model 的 P99。
+2. 计算 **effective latency** = 响应时间 + (实际发送时间 - 计划发送时间)。
+3. 如果 corrected P99 > raw P99 × 1.2，说明存在显著的 Coordinated Omission。
+
+**修正方案**：
+
+- **wrk2**（Gil Tene 改进版）：使用恒定吞吐率（CPS）发送请求，不受响应时间影响。
+- **k6**：支持 `scenarios` 的 `constant-arrival-rate` 执行器（Open Model）。
+- **自定义压测器**：按固定速率生成请求（见 L3 实验 `load_tester.py --model open`）。
+
+### 压测设计的边界陷阱
+
+1. **Warmup 缺失**：JVM、连接池、缓存都需要预热。直接压测前 1 分钟的数据不可信。
+2. **本地回环偏差**：`localhost` 压测不走真实网卡，TCP 栈行为不同（延迟更低、无丢包）。
+3. **单核工具瓶颈**：wrk 默认单线程，如果目标服务是多核的，要用 `-t` 匹配核心数。
+4. **Payload 太小**：128B 请求测出的 QPS 不代表现实（真实 API 通常 1-10KB）。
+5. **忽略错误响应**：只看 QPS 不看错误率。服务过载时可能 500 错误但 QPS 仍高。
+
+## L3：可运行实验
+
+见 `impl/loadtest_lab/`：
+
+```bash
+cd systems-engineering/performance-engineering/impl/loadtest_lab
+pip install -r requirements.txt
+
+# 启动目标服务
+python3 target_server.py --port 8080
+
+# 实验 1：Closed vs Open Model 对比
+python3 load_tester.py --url http://localhost:8080/api/slow \
+    --model closed --concurrency 200 --duration 30
+python3 load_tester.py --url http://localhost:8080/api/slow \
+    --model open --rps 100 --duration 30
+
+# 实验 2：阶梯加压找到崩溃点
+python3 load_tester.py --url http://localhost:8080/api/variable \
+    --model closed --stages "10:10,50:15,100:15,200:15,300:15"
+
+# 实验 3：Coordinated Omission 演示
+python3 load_tester.py --url http://localhost:8080/api/timeout \
+    --model open --rps 50 --duration 30
+# 观察 "CO Corrected P99" 与原始 P99 的差异
+```
+
+实验设计覆盖：
+- `/api/fast`：验证理想状态下的 QPS 上限
+- `/api/slow`：验证延迟固定时的吞吐量公式 `QPS ≈ 并发 / 延迟`
+- `/api/cpu`：验证 CPU 瓶颈的非线性饱和
+- `/api/variable`：验证长尾延迟下的 P99 膨胀
+- `/api/timeout`：验证 CO 修正的必要性
+
 ## 核心追问
 
 1. **压测应该用真实数据还是模拟数据？** 真实数据更准确；如果无法获取，至少要模拟数据分布（Zipfian vs Uniform）
@@ -218,10 +346,10 @@ def verify_improvement(
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| performance profiling toolkit | done |
-| flame graph lab | done |
-| latency budget worksheet | done |
-| load test methodology | done |
-| capacity estimation template | done |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| performance profiling toolkit | L2 | done |
+| flame graph lab | L2 | done |
+| latency budget worksheet | L1 | todo |
+| load test methodology | **L2+L3** | **done** |
+| capacity estimation template | L1 | todo |

@@ -32,7 +32,7 @@
 | Storage Systems | `storage-systems/` | 4 | 0 | 0 | 文件系统、对象存储、LSM、B+Tree、缓存 |
 | Cloud Native | `cloud-native/` | 5 | 4 | 4 | Docker、Kubernetes、Ingress、Service Mesh、Operator |
 | SRE / Reliability | `sre-reliability/` | 5 | 3 | 3 | SLO、错误预算、Incident、容量、降级 |
-| Performance Engineering | `performance-engineering/` | 5 | 1 | 1 | profiling、benchmark、火焰图、容量评估 |
+| Performance Engineering | `performance-engineering/` | 5 | 5 | 3 | profiling、benchmark、火焰图、容量评估 |
 | Security Engineering | `security-engineering/` | 5 | 0 | 0 | IAM、密钥、网络安全、供应链、隔离 |
 | Compilers / Build Systems | `compilers-build-systems/` | 4 | 0 | 0 | 编译链路、依赖图、增量构建、缓存 |
 | Infrastructure Automation | `infrastructure-automation/` | 5 | 0 | 0 | Terraform、GitOps、配置、发布、回滚 |
@@ -49,7 +49,7 @@
 | P0 | distributed consistency playbook | `distributed-systems/` | L1 | L2 |
 | P0 | Kubernetes foundation | `cloud-native/` | L1 | L2 |
 | P0 | SLO / incident playbook | `sre-reliability/` | L1 | L2 |
-| P0 | performance profiling toolkit | `performance-engineering/` | L1 | L2+L3 |
+| P0 | performance profiling toolkit | `performance-engineering/` | L2+L3 | L2+L3 |
 | P1 | storage engine notes | `storage-systems/` | L1 | L2 |
 | P1 | security baseline | `security-engineering/` | L1 | L2 |
 | P1 | build system architecture | `compilers-build-systems/` | L1 | L2 |
@@ -57,15 +57,19 @@
 
 ## 深化路线：能力链（Capability Chain）
 
-**Chain-1：请求延迟诊断链** 🔨 当前攻坚
+**Chain-1：请求延迟诊断链** ✅ 已闭环
 ```
 慢请求
-  ├──► performance-engineering/profiling.md（火焰图、tracing）L1→L2
-  ├──► linux-systems/troubleshooting.md（us/sy/wa 定位）L1→L2+L3
-  │      ├──► operating-systems/io-model.md（epoll、syscall）L1→L2+L3
-  │      │      └──► operating-systems/virtual-memory.md（page fault）L1→L2+L3
-  │      └──► computer-networking/tcp.md（重传、拥塞）L1→L2+L3
-  └──► database-systems/slow-query.md（索引、锁、MVCC）L1→L2
+  ├──► performance-engineering/profiling.md（火焰图、tracing）L1→L2 ✅
+  ├──► performance-engineering/loadtest.md（压测方法论、CO 检测）L1→L2+L3 ✅
+  ├──► performance-engineering/latency-budget.md（延迟拆解、数字锚定）L1→L2+L3 ✅
+  ├──► performance-engineering/capacity-estimation.md（排队论、容量规划）L1→L2+L3 ✅
+  ├──► linux-systems/troubleshooting.md（us/sy/wa 定位）L1→L2+L3 ✅
+  │      ├──► operating-systems/io-model.md（epoll、syscall）L1→L2+L3 ✅
+  │      │      └──► operating-systems/virtual-memory.md（page fault）L1→L2+L3 ✅
+  │      └──► computer-networking/tcp.md（重传、拥塞）L1→L2+L3 ✅
+  │             └──► computer-networking/http-versions.md（HOL 阻塞、QUIC）L1→L2+L3 ✅
+  └──► database-systems/slow-query.md（索引、锁、MVCC）L1→L2+L3 ✅
 ```
 
 **Chain-2：数据一致性链** ⏳ 待启动
