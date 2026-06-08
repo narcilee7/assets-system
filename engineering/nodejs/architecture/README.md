@@ -13,10 +13,8 @@
 
 ## 资产
 
-| 资产 | 状态 |
-| --- | --- |
-| Node.js BFF blueprint | todo |
-| modular NestJS architecture | todo |
-| API gateway with auth and rate limit | todo |
-| event-driven Node.js service | todo |
-
+| 资产 | 目录 | 说明 |
+| --- | --- | --- |
+| Node.js BFF blueprint | `bff-blueprint/` | 服务聚合、降级中间件、缓存层 |
+| API gateway with auth and rate limit | `api-gateway/` | Express + http-proxy-middleware + JWT + 限流 |
+| modular NestJS architecture | *(见 `../frameworks/nestjs-blueprint`)* | 模块、分层、依赖注入 |

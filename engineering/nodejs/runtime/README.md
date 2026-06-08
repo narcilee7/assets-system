@@ -13,10 +13,9 @@
 
 ## 资产
 
-| 资产 | 状态 |
-| --- | --- |
-| event loop ordering lab | todo |
-| stream backpressure demo | todo |
-| worker_threads CPU isolation | todo |
-| memory leak diagnosis | todo |
-
+| 资产 | 目录 | 说明 |
+| --- | --- | --- |
+| event loop ordering lab | `event-loop-lab/` | 时序实验、I/O 上下文 race、nextTick 饥饿 |
+| stream backpressure demo | `stream-pipeline/` | 手动背压、pipeline API、transform stream |
+| worker_threads CPU isolation | `worker-threads/` | Worker Pool、斐波那契计算示例 |
+| memory leak diagnosis | *(见 `../performance/event-loop-lag`)* | perf_hooks 监测 event loop lag |

@@ -13,10 +13,9 @@
 
 ## 资产
 
-| 资产 | 状态 |
-| --- | --- |
-| Node.js API error model | todo |
-| zod validation pipeline | todo |
-| GraphQL DataLoader demo | todo |
-| BFF aggregation service | todo |
-
+| 资产 | 目录 | 说明 |
+| --- | --- | --- |
+| Node.js API error model | `error-model/` | AppError、结构化错误码、Express 全局错误中间件、asyncHandler |
+| zod validation pipeline | `zod-pipeline/` | 通用校验中间件、业务 Schema、类型推导 |
+| GraphQL BFF | `graphql-bff/` | Apollo Server、DataLoader N+1 解决、Resolver |
+| tRPC router | `trpc-router/` | 端到端类型安全、Router、HTTP Handler、前端调用 |

@@ -19,10 +19,8 @@
 
 ## 资产
 
-| 资产 | 状态 |
-| --- | --- |
-| SSE server with resume | todo |
-| WebSocket room service | todo |
-| Socket.IO scale-out | todo |
-| Agent event streaming gateway | todo |
-
+| 资产 | 目录 | 说明 |
+| --- | --- | --- |
+| SSE server with resume | `sse-server/` | EventSource、Last-Event-ID 续传、心跳 |
+| WebSocket room service | `websocket-room/` | Room 管理、连接状态、多实例 Redis Adapter |
+| Agent event streaming gateway | *(见 `../ai-backend/streaming-gateway`)* | AI SSE Streaming + Tool Call |

@@ -58,11 +58,12 @@
 | P0 | retry / timeout / circuit breaker | `reliability/stability-patterns/` | tested |
 | P0 | transaction boundary + idempotency | `data-consistency/transaction-boundary/` | tested |
 | P0 | service observability baseline | `observability/observability-baseline/` | tested |
-| P1 | layered service blueprint | `architecture-styles/` | todo |
-| P1 | API design checklist | `api-design/` | todo |
+| P1 | layered service blueprint | `architecture-styles/layered-service-blueprint/` | tested |
+| P1 | API design checklist | `api-design/api-design-checklist/` | tested |
+| P1 | outbox pattern | `data-consistency/outbox-pattern/` | tested |
 | P1 | agent tool runtime backend | `ai-backend/` | todo |
 | P1 | domain modeling kata | `domain-modeling/` | todo |
-| P1 | outbox + event bus | `data-consistency/` | todo |
+| P1 | saga workflow | `data-consistency/` | todo |
 | P1 | capacity estimation worksheet | `scalability/` | todo |
 | P1 | auth / permission model | `security/` | todo |
 | P1 | release and rollback checklist | `platform-engineering/` | todo |

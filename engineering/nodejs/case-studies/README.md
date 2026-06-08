@@ -1,5 +1,11 @@
-# CASE STUDIES
+# Case Studies
 
-状态：seed。
+用 Node.js 实现完整后端案例，演示模块化架构、事务、缓存、队列和可观测性的综合应用。
 
-这个目录已进入体系索引，后续需要补齐目标、范围、资产清单和验证方式。
+## 资产
+
+| 资产 | 目录 | 说明 |
+| --- | --- | --- |
+| E-commerce backend | `ecommerce-backend/` | NestJS + Prisma + 事务 + 异步邮件 |
+| Real-time chat system | `chat-system/` | Socket.IO + Redis Adapter + 消息持久化 + 撤回 |
+| Distributed task scheduler | `task-scheduler/` | BullMQ + DAG 依赖 + Cron + 死信队列 |

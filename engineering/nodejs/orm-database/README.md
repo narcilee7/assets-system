@@ -25,11 +25,11 @@
 
 ## 资产
 
-| 资产 | 状态 |
-| --- | --- |
-| Prisma schema and migration | todo |
-| Prisma transaction boundary | todo |
-| TypeORM repository pattern | todo |
-| Drizzle query builder notes | todo |
-| ORM selection matrix | todo |
-
+| 资产 | 目录 | 说明 |
+| --- | --- | --- |
+| Prisma schema and migration | `prisma-transaction/` | schema.prisma、迁移工作流 |
+| Prisma transaction boundary | `prisma-transaction/src/` | 交互式事务、批量事务、隔离级别 |
+| TypeORM repository pattern | `typeorm-example/` | Entity、DataSource、Repository、悲观锁事务 |
+| Drizzle query builder | `drizzle-example/` | Schema、SQL-like 查询、事务、PGVector |
+| Mongoose ODM pattern | `mongoose-example/` | Schema、Model、Populate、MongoDB 事务 |
+| ORM selection matrix | *(见本 README 表格)* | 按场景选型参考 |

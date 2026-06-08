@@ -21,34 +21,55 @@ Node.js 能力目标是精通级：理解运行时和事件循环，能用 Node.
 | Frameworks | `frameworks/` | Express、Koa、NestJS、Fastify、Hono、Next API |
 | API Design | `api-design/` | REST、GraphQL、RPC、BFF、错误模型 |
 | ORM / Database | `orm-database/` | Prisma、TypeORM、Sequelize、Drizzle、Mongoose、Knex |
-| Auth / Security | `auth-security/` | session、JWT、OAuth、CSRF、XSS、rate limit |
+| Auth / Security | `auth-security/` | session、JWT、OAuth、CSRF、XSS、rate limit、password hashing |
 | Background Jobs | `background-jobs/` | BullMQ、Agenda、worker、retry、DLQ |
 | Realtime | `realtime/` | WebSocket、SSE、Socket.IO、backpressure |
 | Observability | `observability/` | pino、OpenTelemetry、metrics、trace |
 | Testing | `testing/` | Jest、Vitest、Supertest、Testcontainers、contract |
-| Performance | `performance/` | profiling、clinic、heap、cluster、worker_threads |
+| Performance | `performance/` | profiling、clinic、heap、cluster、worker_threads、caching |
 | Architecture | `architecture/` | BFF、gateway、modular monolith、microservice |
 | Ecosystem | `ecosystem/` | npm、pnpm、monorepo、native addon、supply chain |
-| Deploy / Platform | `deploy-platform/` | Docker、serverless、PM2、K8s、edge |
-| AI Backend | `ai-backend/` | tool runtime、SSE、RAG API、eval service |
-| Case Studies | `case-studies/` | 用 Node.js 实现完整后端案例 |
+| Deploy / Platform | `deploy-platform/` | Docker、serverless、PM2、K8s、CI/CD、edge |
+| AI Backend | `ai-backend/` | tool runtime、SSE、RAG API、workflow、eval |
+| Case Studies | `case-studies/` | 电商、聊天系统、任务调度 |
 
 ## 核心题单
 
 | 优先级 | 资产 | 目录 | 状态 |
 | --- | --- | --- | --- |
-| P0 | event loop deep dive | `runtime/` | todo |
-| P0 | stream pipeline | `runtime/` | todo |
-| P0 | NestJS service blueprint | `frameworks/` | todo |
-| P0 | Prisma transaction and migration | `orm-database/` | todo |
-| P0 | Node.js API error model | `api-design/` | todo |
-| P0 | BullMQ job architecture | `background-jobs/` | todo |
-| P0 | SSE / WebSocket service | `realtime/` | todo |
-| P0 | Node.js observability baseline | `observability/` | todo |
-| P1 | Fastify performance service | `frameworks/` | todo |
-| P1 | GraphQL BFF | `api-design/` | todo |
-| P1 | OAuth + session architecture | `auth-security/` | todo |
-| P1 | Node.js AI tool runtime | `ai-backend/` | todo |
+| P0 | event loop deep dive | `runtime/event-loop-lab/` | done |
+| P0 | stream pipeline | `runtime/stream-pipeline/` | done |
+| P0 | NestJS service blueprint | `frameworks/nestjs-blueprint/` | done |
+| P0 | Fastify performance service | `frameworks/fastify-service/` | done |
+| P0 | Prisma transaction and migration | `orm-database/prisma-transaction/` | done |
+| P0 | Node.js API error model | `api-design/error-model/` | done |
+| P0 | BullMQ job architecture | `background-jobs/bullmq-architecture/` | done |
+| P0 | SSE / WebSocket service | `realtime/sse-server/`, `realtime/websocket-room/` | done |
+| P0 | Node.js observability baseline | `observability/pino-logger/`, `observability/opentelemetry-baseline/` | done |
+| P1 | Koa onion model | `frameworks/koa-onion/` | done |
+| P1 | Hono edge runtime | `frameworks/hono-edge/` | done |
+| P1 | Next.js API Routes | `frameworks/nextjs-api-routes/` | done |
+| P1 | GraphQL BFF | `api-design/graphql-bff/` | done |
+| P1 | tRPC router | `api-design/trpc-router/` | done |
+| P1 | TypeORM repository | `orm-database/typeorm-example/` | done |
+| P1 | Drizzle query builder | `orm-database/drizzle-example/` | done |
+| P1 | Mongoose ODM | `orm-database/mongoose-example/` | done |
+| P1 | OAuth + session architecture | `auth-security/oauth-session/` | done |
+| P1 | JWT complete implementation | `auth-security/jwt-implementation/` | done |
+| P1 | CSRF & XSS protection | `auth-security/csrf-xss-protection/` | done |
+| P1 | Password hashing | `auth-security/password-hashing/` | done |
+| P1 | Monorepo with pnpm | `ecosystem/monorepo/` | done |
+| P1 | Kubernetes deployment | `deploy-platform/k8s/` | done |
+| P1 | CI/CD with GitHub Actions | `deploy-platform/github-actions/` | done |
+| P1 | Node.js AI tool runtime | `ai-backend/tool-runtime/` | done |
+| P1 | RAG API | `ai-backend/rag-api/` | done |
+| P1 | Workflow API | `ai-backend/workflow-api/` | done |
+| P1 | Eval API | `ai-backend/eval-api/` | done |
+| P1 | Chat system case study | `case-studies/chat-system/` | done |
+| P1 | Task scheduler case study | `case-studies/task-scheduler/` | done |
+| P1 | Heap diagnosis | `performance/heap-diagnosis/` | done |
+| P1 | Cluster mode | `performance/cluster-mode/` | done |
+| P1 | Caching strategy | `performance/cache-strategy/` | done |
 
 ## 架构师级追问
 
@@ -60,4 +81,5 @@ Node.js 能力目标是精通级：理解运行时和事件循环，能用 Node.
 - 数据库事务、连接池和 serverless 有什么坑？
 - 如何设计 Node.js BFF？
 - 如何用 Node.js 实现 Agent streaming 和 tool runtime？
-
+- 如何设计支持百万连接的实时系统？
+- 如何在 K8s 上实现 Node.js 的零停机部署？
