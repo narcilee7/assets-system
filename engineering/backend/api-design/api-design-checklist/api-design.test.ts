@@ -4,7 +4,7 @@
  * 运行：在 engineering/backend/ 目录执行 `npm test`
  */
 
-import { describe, it } from "node:test";
+import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert";
 import {
   ApiError,

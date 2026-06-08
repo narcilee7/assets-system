@@ -254,8 +254,9 @@ describe("SagaOrchestrator", () => {
       const saga = new SagaOrchestrator(steps, { timeoutMs: 50 });
       await saga.execute({});
 
-      // 只有 step1 完成，slow 超时后开始补偿 step1
-      assert.deepStrictEqual(log, ["step1", "slow", "step1-c"]);
+      // step1 完成，slow 超时（50ms < 100ms），step1 被补偿
+      // slow 永远不会被执行到，因为超时后 saga 就失败了
+      assert.deepStrictEqual(log, ["step1", "step1-c"]);
     });
   });
 

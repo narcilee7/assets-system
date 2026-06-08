@@ -32,4 +32,8 @@
 | TypeORM repository pattern | `typeorm-example/` | Entity、DataSource、Repository、悲观锁事务 |
 | Drizzle query builder | `drizzle-example/` | Schema、SQL-like 查询、事务、PGVector |
 | Mongoose ODM pattern | `mongoose-example/` | Schema、Model、Populate、MongoDB 事务 |
-| ORM selection matrix | *(见本 README 表格)* | 按场景选型参考 |
+| Knex query builder | `knex-example/` | 查询构建、事务、迁移、复杂聚合 |
+| MongoDB aggregation pipeline | `mongodb-advanced/aggregation/` | $match、$group、$lookup、$facet |
+| MongoDB indexing strategy | `mongodb-advanced/indexing/` | 复合索引、ESR 规则、TTL、部分索引 |
+| MongoDB Change Streams | `mongodb-advanced/change-streams/` | 实时变更监听、Resume Token、断点续传 |
+| MongoDB multi-document transactions | `mongodb-advanced/transactions/` | ACID、乐观锁、Session |

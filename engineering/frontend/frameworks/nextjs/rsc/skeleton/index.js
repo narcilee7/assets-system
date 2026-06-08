@@ -213,7 +213,7 @@ async function testRSC() {
   });
 
   console.log(`  Layout result: ${JSON.stringify(layoutResult)}`);
-  console.assert(layoutResult.props.children.type === 'article', 'Should embed server content');
+  console.assert(layoutResult.props.serializedProps?.children?.type === 'article', 'Should embed server content');
   console.log('  ✅ Children slot pattern works\n');
 
   // Test 6: Server Action

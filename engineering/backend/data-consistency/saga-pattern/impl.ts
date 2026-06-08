@@ -75,6 +75,7 @@ export class SagaOrchestrator<TContext = unknown> {
   private sagaId: string;
   private status: SagaStatus = "running";
   private completedStepNames: string[] = [];
+  private compensatedStepNames: string[] = [];
   private stepResults: SagaStepResult[] = [];
   private options: Required<SagaOptions>;
 
@@ -165,6 +166,7 @@ export class SagaOrchestrator<TContext = unknown> {
       while (retries <= this.options.maxRetries) {
         try {
           await step.compensate(ctx);
+          this.compensatedStepNames.push(stepName);
           break; // 补偿成功，继续下一步
         } catch (error) {
           retries++;
@@ -206,8 +208,7 @@ export class SagaOrchestrator<TContext = unknown> {
       status: this.status,
       steps: this.stepResults,
       completedSteps: this.completedStepNames,
-      compensatedSteps:
-        this.status === "compensating" ? this.completedStepNames.slice().reverse() : [],
+      compensatedSteps: this.compensatedStepNames,
       finalError,
     };
   }

@@ -16,6 +16,7 @@
 | 资产 | 目录 | 说明 |
 | --- | --- | --- |
 | event loop ordering lab | `event-loop-lab/` | 时序实验、I/O 上下文 race、nextTick 饥饿 |
+| event loop bootstrap implementation | `event-loop-bootstrap/` | 从零自举 Event Loop：最小堆、Phase、Drain 规则、全局 API 替换 |
 | stream backpressure demo | `stream-pipeline/` | 手动背压、pipeline API、transform stream |
 | worker_threads CPU isolation | `worker-threads/` | Worker Pool、斐波那契计算示例 |
 | memory leak diagnosis | *(见 `../performance/event-loop-lag`)* | perf_hooks 监测 event loop lag |

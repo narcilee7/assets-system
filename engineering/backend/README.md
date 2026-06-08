@@ -61,11 +61,11 @@
 | P1 | layered service blueprint | `architecture-styles/layered-service-blueprint/` | tested |
 | P1 | API design checklist | `api-design/api-design-checklist/` | tested |
 | P1 | outbox pattern | `data-consistency/outbox-pattern/` | tested |
+| P1 | saga workflow | `data-consistency/saga-pattern/` | tested |
+| P1 | domain modeling permission kata | `domain-modeling/permission-kata/` | tested |
+| P1 | auth / permission model | `security/rbac-model/` | tested |
 | P1 | agent tool runtime backend | `ai-backend/` | todo |
-| P1 | domain modeling kata | `domain-modeling/` | todo |
-| P1 | saga workflow | `data-consistency/` | todo |
 | P1 | capacity estimation worksheet | `scalability/` | todo |
-| P1 | auth / permission model | `security/` | todo |
 | P1 | release and rollback checklist | `platform-engineering/` | todo |
 
 ## 训练路径
