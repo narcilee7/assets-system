@@ -1,49 +1,53 @@
-# 安全工程化
+# Security Engineering
 
-安全工程化训练 —— 达到"能设计安全架构、能防御 OWASP Top 10、能实施密码学方案、能通过安全审计"的水平。
+工程安全训练 —— 覆盖应用安全、前端安全、DevSecOps 和云安全的完整安全工程化体系。
 
-## 训练哲学
+## 架构
 
-1. **安全不是附加功能**：从需求分析阶段就要引入威胁建模，安全左移。
-2. **不信任任何输入**：所有外部输入都是潜在的攻击向量，必须验证、消毒、编码。
-3. **最小权限原则**：每个组件、每个用户只拥有完成任务所需的最小权限。
-4. **纵深防御**：单一安全措施会被突破，多层防护才能提高攻击成本。
+```
+engineering/security/
+├── README.md                 # 本文件：安全工程化总览
+├── mini-impl/                # 通用安全手写实现
+│   ├── jwt-implementation.md    # JWT 生成与验证
+│   ├── password-hashing.md      # 密码哈希（PBKDF2/Argon2）
+│   └── rbac-engine.md           # RBAC 权限引擎
+└── (索引)
+    ├── backend/security/       # 后端安全（RBAC、认证授权、租户隔离）
+    ├── frontend/security/      # 前端安全（CSP、XSS、CSRF、供应链）
+    ├── devsecops/              # DevSecOps（SDL、SAST/DAST/SCA、容器安全）
+    └── cloud-security/         # 云安全（IAM、网络隔离、数据加密、工作负载安全）
+```
 
-## 体系索引
+## 安全工程化全景
 
-| 文档 | 内容 |
-|------|------|
-| [01-security-fundamentals.md](01-security-fundamentals.md) | 安全基础：OWASP Top 10、SDL、威胁建模、安全左移 |
-| [02-authentication-authorization.md](02-authentication-authorization.md) | 认证授权：JWT、OAuth2/OIDC、RBAC、ABAC、SSO、MFA |
-| [03-input-protection.md](03-input-protection.md) | 输入防护：SQL 注入、XSS、CSRF、命令注入、文件上传、SSRF |
-| [04-cryptography.md](04-cryptography.md) | 密码学：对称加密、非对称加密、哈希、HMAC、数字签名、证书管理 |
-| [05-network-security.md](05-network-security.md) | 网络安全：HTTPS/TLS、CORS、CSP、WAF、DDoS 防护 |
-| [06-audit-compliance.md](06-audit-compliance.md) | 审计合规：安全日志、合规框架、渗透测试、漏洞管理 |
+| 层级 | 领域 | 关注点 | 对应目录 |
+|------|------|--------|----------|
+| 应用层 | 前端安全 | XSS、CSRF、CSP、HTTPS、供应链 | `frontend/security/` |
+| 应用层 | 后端安全 | 认证授权、输入校验、数据保护 | `backend/security/` |
+| 交付层 | DevSecOps | SDL、自动化扫描、容器安全、事件响应 | `devsecops/` |
+| 基础设施 | 云安全 | IAM、VPC、加密、K8s 安全、Serverless | `cloud-security/` |
+| 通用能力 | 密码学 / 权限 | JWT、哈希、RBAC、ABAC | `security/mini-impl/` |
 
-### 手写实现
-| 文档 | 内容 |
-|------|------|
-| [mini-impl/jwt-implementation.md](mini-impl/jwt-implementation.md) | 手写 JWT 生成与验证 |
-| [mini-impl/password-hashing.md](mini-impl/password-hashing.md) | 手写密码哈希系统（PBKDF2/Argon2） |
-| [mini-impl/rbac-engine.md](mini-impl/rbac-engine.md) | 手写 RBAC 权限引擎 |
+## 通用安全手写实现
+
+| 实现 | 说明 | 适用语言 |
+|------|------|----------|
+| [JWT 生成与验证](mini-impl/jwt-implementation.md) | HS256/RS256、Base64Url、过期验证 | Node.js + Python |
+| [密码哈希系统](mini-impl/password-hashing.md) | PBKDF2 + Scrypt、MCF 格式、参数升级 | Node.js + Python |
+| [RBAC 权限引擎](mini-impl/rbac-engine.md) | 角色继承、通配符匹配、缓存、中间件 | Node.js + Python |
 
 ## 安全决策树
 
 ```
-用户身份？
-  ├─ 匿名用户 → 最小权限，只允许公开资源
-  ├─ 普通用户 → RBAC 角色权限
-  └─ 管理员 → 额外审计日志、MFA
+防御面？
+  ├─ 浏览器端 → frontend/security（CSP/XSS/CSRF）
+  ├─ 服务端 API → backend/security（认证/授权/注入防护）
+  ├─ 交付流水线 → devsecops（SAST/DAST/SCA）
+  └─ 基础设施 → cloud-security（IAM/网络/加密）
 
 数据敏感度？
-  ├─ 公开 → 无需加密
-  ├─ 内部 → 传输层加密（TLS）
-  ├─ 机密 → 传输 + 存储加密
-  └─ 高度机密 → 端到端加密、零信任
-
-部署环境？
-  ├─ 本地 → 防火墙 + IDS
-  ├─ 私有云 → 云安全组 + WAF
-  ├─ 公有云 → 云原生安全服务
-  └─ 混合 → 统一安全策略
+  ├─ 公开 → 基础 TLS
+  ├─ 内部 → TLS + 访问控制
+  ├─ 机密 → 传输+存储加密 + 审计日志
+  └─ 高度机密 → 端到端加密 + 零信任 + 合规
 ```
