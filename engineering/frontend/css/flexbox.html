@@ -1,46 +1,46 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>三栏布局，中间固定宽度，两边自适应</title>
-</head>
-<body>
-  <div class="container">
-    <div class="left-column">左边栏 (flexible)</div>
-      <div class="center-column">中间栏 (固定宽度)</div>
-    <div class="right-column">右边栏 (flexible)</div>
-  </div>
-</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>三栏布局，中间固定宽度，两边自适应</title>
+    </head>
+    <body>
+        <div class="container">
+            <div class="left-column">左边栏 (flexible)</div>
+            <div class="center-column">中间栏 (固定宽度)</div>
+            <div class="right-column">右边栏 (flexible)</div>
+        </div>
+    </body>
 
-<style>
-  .container {
-    display: flex;
-  }
+    <style>
+        .container {
+            display: flex;
+        }
 
-  .center-column {
-    width: 600px;
-    background-color: lightblue;
-    flex-shrink: 0; /* 不压缩 */
-  }
+        .center-column {
+            width: 600px;
+            background-color: lightblue;
+            flex-shrink: 0; /* 不压缩 */
+        }
 
-  .left-column {
-    flex: 1;
-    background-color: lightgreen;
-  }
+        .left-column {
+            flex: 1;
+            background-color: lightgreen;
+        }
 
-  .right-column {
-    flex: 1;
-    background-color: lightcoral;
-  }
+        .right-column {
+            flex: 1;
+            background-color: lightcoral;
+        }
 
-  .container > div {
-    height: 200px;
-    padding: 20px;
-    box-sizing: border-box;
-    text-align: center;
-    line-height: 160px;
-    border: 1px solid #ccc;
-  }
-</style>
+        .container > div {
+            height: 200px;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            line-height: 160px;
+            border: 1px solid #ccc;
+        }
+    </style>
 </html>
