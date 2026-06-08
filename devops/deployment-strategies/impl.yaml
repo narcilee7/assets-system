@@ -1,0 +1,166 @@
+# Blue-Green Deployment Manifests
+
+---
+# Blue Deployment (Current Production)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-blue
+  labels:
+    app: myapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+      slot: blue
+  template:
+    metadata:
+      labels:
+        app: myapp
+        slot: blue
+    spec:
+      containers:
+        - name: myapp
+          image: myapp:v1.0.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+
+---
+# Green Deployment (New Version)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-green
+  labels:
+    app: myapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+      slot: green
+  template:
+    metadata:
+      labels:
+        app: myapp
+        slot: green
+    spec:
+      containers:
+        - name: myapp
+          image: myapp:v2.0.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+
+---
+# Service (currently pointing to blue)
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp
+  labels:
+    app: myapp
+spec:
+  type: ClusterIP
+  selector:
+    app: myapp
+    slot: blue
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+
+---
+# Canary Deployment (10% traffic)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-canary
+  labels:
+    app: myapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
+      track: canary
+  template:
+    metadata:
+      labels:
+        app: myapp
+        track: canary
+    spec:
+      containers:
+        - name: myapp
+          image: myapp:v2.0.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+
+---
+# Stable Deployment (90% traffic)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-stable
+  labels:
+    app: myapp
+spec:
+  replicas: 9
+  selector:
+    matchLabels:
+      app: myapp
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: myapp
+        track: stable
+    spec:
+      containers:
+        - name: myapp
+          image: myapp:v1.0.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+
+---
+# Service for Canary (selects both stable and canary)
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-canary-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: myapp
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
