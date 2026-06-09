@@ -338,6 +338,60 @@ HTTP/2 的优化：
   - 需要测试确认
 ```
 
+## L2：消息送达语义与源码锚定
+
+### 浏览器 EventSource 重连源码（Chromium）
+
+```cpp
+// chromium/content/browser/renderer_host/sse_event_source.cc
+void EventSource::OnConnectionError(...) {
+    // 连接断开 → 进入 RECONNECTING 状态
+    state_ = RECONNECTING;
+    // 使用服务端下发的 retry 值（默认 3000ms）
+    int delay = last_event_id_.empty() ? retry_ : retry_;
+    // 带上 Last-Event-ID 重连
+    Connect(last_event_id_);
+}
+
+// 关键：如果服务端返回 204 No Content，浏览器认为"服务端要求停止"，不再重连
+if (response_code == 204) {
+    state_ = CLOSED;
+    return;  // 永久关闭，不再重连
+}
+```
+
+**边界陷阱**：如果服务端在维护时返回 404 而非 204，EventSource 会无限重连（每次 3 秒），造成服务端压力。最佳实践：维护期间返回 `204` 或设置 `retry: 60000`（1 分钟）。
+
+### 消息送达语义的形式化
+
+SSE 原生提供 **at-least-once** 语义：
+- 正常情况：消息按序送达。
+- 网络抖动：浏览器自动重连 + `Last-Event-ID` → 服务端重发未确认消息。
+- 极端情况：如果客户端在收到消息和发送下一个请求之间崩溃，消息可能丢失（没有客户端 ACK 机制）。
+
+```
+exactly-once 不可能的原因：
+  - SSE 没有客户端显式 ACK
+  - 服务端不知道客户端是否成功处理消息
+  - 重连时服务端只能"从某个 ID 之后重发"，无法区分"客户端已收到但未处理"和"客户端未收到"
+
+工程 workaround：
+  - 客户端维护已处理消息的 ID 集合（去重）
+  - 服务端消息带唯一 ID（Snowflake / UUID）
+  - 客户端幂等处理
+```
+
+### 多节点共享存储的数字锚定
+
+| 方案 | 单节点吞吐 | 跨节点延迟 | 适用规模 |
+|---|---|---|---|
+| 内存 Ring Buffer | 100K msg/s | 0ms | < 10 节点 |
+| Redis Stream | 50K msg/s | ~1ms | < 100 节点 |
+| Kafka (单分区) | 10K-50K msg/s | ~5-10ms | 无限 |
+| NATS JetStream | 50K+ msg/s | ~1ms | < 1000 节点 |
+
+**关键瓶颈**：跨节点广播的复杂度是 O(N²)（每个节点都要推送到所有持有连接的节点），超过 50 节点时应改用消息队列 + Gateway 架构。
+
 ## 核心追问
 
 1. **SSE 的 Last-Event-ID 如果服务端找不到怎么办？** 服务端应发送全量快照或错误事件，客户端降级处理；不能静默跳过

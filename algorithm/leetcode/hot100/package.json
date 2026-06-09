@@ -1,0 +1,13 @@
+{
+  "name": "leetcode-hot100",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "echo 'Run tests per problem'"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "tsx": "^4.0.0",
+    "@types/node": "^20.0.0"
+  }
+}

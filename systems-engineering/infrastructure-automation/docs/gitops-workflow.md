@@ -329,6 +329,53 @@ ArgoCD 管理多集群：
   - ArgoCD 用 KSOPS 插件解密
 ```
 
+## L2：ArgoCD Controller 源码与协调循环
+
+### Application Controller 协调循环
+
+```go
+// argo-cd/controller/appcontroller.go:Run()
+// 核心协调循环（每 3 分钟一次，或 Webhook 触发）
+func (ctrl *ApplicationController) Run(ctx context.Context, duration time.Duration) {
+    for {
+        select {
+        case <-time.After(duration):
+            ctrl.processAppRefreshQueue()   // 处理待刷新队列
+        case app := <-ctrl.appRefreshQueue:
+            ctrl.refreshAppConditions(app)  // 对比 Desired vs Actual
+        }
+    }
+}
+
+// 状态对比逻辑：
+// 1. 从 Git 拉取目标状态（helm template / kustomize build / plain yaml）
+// 2. 从 K8s API 获取实际状态（live objects）
+// 3. 用 gitops-engine/pkg/sync 计算 diff
+// 4. 如果 auto-sync 开启，执行 kubectl apply
+```
+
+关键数据结构：`Application` CRD 的 `status.sync` 字段：
+- `status.sync.status`: `Synced` / `OutOfSync` / `Unknown`
+- `status.sync.revision`: 当前同步的 Git commit SHA
+- `status.health.status`: `Healthy` / `Progressing` / `Degraded` / `Missing`
+
+### 协调延迟的数字锚定
+
+| 触发方式 | 典型延迟 | 说明 |
+|---|---|---|
+| 轮询（默认） | ~3 分钟 | `timeout.reconciliation` 控制，最小 60s |
+| Webhook | ~5-10 秒 | Git provider → ArgoCD API → 入队 |
+| 手动 Sync | ~1-5 秒 | 直接触发协调 |
+| 自动 self-heal | ~3 分钟 + 探测时间 | 和轮询周期一致 |
+
+**陷阱**：如果 Git 仓库很大（单 repo 管理 100+ 应用），`helm template` 或 `kustomize build` 可能耗时 10-30 秒，导致协调队列堆积。
+
+### GitOps 的边界陷阱
+
+1. **Git 回滚 ≠ 数据库回滚**：GitOps 对无状态服务回滚完美，但对数据库 schema 变更、外部 API 调用、消息队列生产者变更无能为力。
+2. **CRD 删除顺序**：删除一个带 CRD 的应用时，如果 CRD 实例（CR）还在，ArgoCD 的 `prune` 会卡主。需要先删除 CR，再删除 CRD。
+3. **Secret 漂移**：即使配置了 External Secrets Operator，如果外部 secret provider（如 AWS Secrets Manager）不可用，同步会失败，但 ArgoCD 只会标记 `Degraded`，不会自动回滚。
+
 ## 核心追问
 
 1. **GitOps 的自动 selfHeal 会不会把合理的临时修改也回滚？** 会。如果运维人员为了应急手动 kubectl edit，selfHeal 会在下一次协调周期恢复；建议应急时先暂停 Auto-Sync，或设置 sync window
@@ -339,10 +386,10 @@ ArgoCD 管理多集群：
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| Terraform blueprint | done |
-| GitOps workflow | done |
-| config and secret layering | todo |
-| deployment rollback playbook | todo |
-| policy as code notes | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| Terraform blueprint | L1 | done |
+| GitOps workflow | **L2** | **done** |
+| config and secret layering | L1 | todo |
+| deployment rollback playbook | L1 | todo |
+| policy as code notes | L1 | todo |

@@ -1,0 +1,40 @@
+# LeetCode Hot100 — Justfile
+# Usage: just <topic> <problem> <lang> [args]
+# Example: just run array 1_TwoSum go
+
+set shell := ["zsh", "-c"]
+set dotenv-load := true
+
+# Run a solution
+run topic problem lang *args:
+    cd topics/{{topic}}/{{problem}}/solutions/{{lang}} && \
+    case {{lang}} in \
+        go)   go run *.go {{args}} ;; \
+        ts)   npx tsx *.ts {{args}} ;; \
+        py)   python3 *.py {{args}} ;; \
+    esac
+
+# Run all solutions for a problem (runs each lang)
+test-problem topic problem:
+    #!/usr/bin/env zsh
+    for lang in go ts py; do
+        if ls topics/{{topic}}/{{problem}}/solutions/$lang/*.go *.ts *.py &>/dev/null 2>&1; then
+            echo "=== $lang ==="
+            just run {{topic}} {{problem}} $lang
+        fi
+    done
+
+# List all problems
+list:
+    @find topics -name "review.md" | sort
+
+# Count problems by topic
+stats:
+    #!/usr/bin/env zsh
+    echo "Problems by topic:"
+    for topic in topics/*/; do
+        count=$(find "$topic" -maxdepth 2 -name "review.md" | wc -l)
+        echo "  $topic: $count"
+    done
+    echo ""
+    echo "Total: $(find topics -name "review.md" | wc -l)"

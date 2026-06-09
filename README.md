@@ -11,7 +11,7 @@
 | Foundation | Language Runtime | `language/` | JS / TS / Python / Go 的运行时、类型、并发和手写能力 |
 | Foundation | Algorithms | `algorithm/` | 数据结构、算法模式、LeetCode 高频题 |
 | Systems | Systems Engineering | `systems-engineering/` | OS、Linux、网络、数据库、分布式、云原生、SRE、性能 |
-| Engineering | Engineering Architecture | `engineering/` | 前端、后端、Node.js、工程化、可靠性、平台化 |
+| Engineering | Engineering Architecture | `engineering/` | Node.js / Go / Python 工程化体系、前端、后端、可靠性、平台化 |
 | Architecture | System Design | `system-design/` | 以真实案例训练需求、接口、数据、一致性、扩展和失败路径 |
 | Intelligence | Artificial Intelligence | `artificial-intelligence/` | ML、DL、Transformer、LLM、VLM、Post-training、推理、评估 |
 | Product | AI Fullstack | `ai-fullstack/` | Agent、RAG、Tool Calling、Eval、Streaming UI、AI 应用闭环 |
@@ -19,13 +19,14 @@
 
 ## 当前焦点
 
-当前只推进 5 个 P0 焦点，其他目录先作为体系骨架保留：
+当前推进 6 个 P0 焦点，其他目录先作为体系骨架保留：
 
 | 焦点 | 目录 | 目标 | 状态 |
 | --- | --- | --- | --- |
 | Python 资产样板 | `language/python/` | 用已通过测试的实现建立“实现 + 测试 + 复盘”标准 | tested |
-| 后端架构师模型 | `engineering/backend/` | 领域、API、一致性、可靠性、可观测、AI Backend | seed |
-| 前端架构师模型 | `engineering/frontend/` | Framework、工程化、跨端、微前端、AI Frontend | seed |
+| Node.js 工程化体系 | `engineering/nodejs/` | Runtime、框架、ORM、分布式、消息队列、AI Backend、CLI/TUI、案例 | reviewed |
+| Go 工程化体系 | `engineering/go/` | GMP、Gin、ORM、gRPC、K8s、AI Streaming、CLI/TUI、微服务案例 | draft |
+| Python 工程化体系 | `engineering/python/` | FastAPI、SQLAlchemy、Celery、LangChain、部署、案例 | draft |
 | 系统工程基础 | `systems-engineering/` | Linux、网络、数据库、分布式、Kubernetes、SRE、性能 | seed |
 | AI 模型体系 | `artificial-intelligence/` | Transformer、LLM、VLM、Post-training、推理优化、评估 | seed |
 

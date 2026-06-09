@@ -17,7 +17,7 @@
 
 | 资产 | 状态 | 目标 |
 | --- | --- | --- |
-| permission model design | todo | RBAC / ABAC |
+| RBAC permission model | done | `rbac-model/`：用户、角色、权限、继承、审计 |
 | tenant isolation checklist | todo | query、cache、event 隔离 |
 | audit log design | todo | 不可抵赖和查询 |
 | high-risk action confirmation | todo | AI tool / admin action |

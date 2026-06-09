@@ -13,11 +13,11 @@
 
 ## 资产
 
-| 资产 | 状态 |
-| --- | --- |
-| Express middleware architecture | todo |
-| Koa onion model | todo |
-| NestJS modular service blueprint | todo |
-| Fastify schema validation | todo |
-| framework selection matrix | todo |
-
+| 资产 | 目录 | 说明 |
+| --- | --- | --- |
+| Express middleware architecture | `express-middleware/` | 中间件工厂、安全头、角色限流 |
+| Koa onion model | `koa-onion/` | 洋葱模型、组合式中间件、日志 |
+| NestJS modular service blueprint | `nestjs-blueprint/` | 模块、拦截器、异常过滤器、DTO |
+| Fastify schema validation | `fastify-service/` | schema-first 路由、装饰器插件、错误处理 |
+| Hono edge runtime | `hono-edge/` | Cloudflare Workers、Zod 校验、跨运行时 |
+| Next.js API Routes | `nextjs-api-routes/` | App Router Route Handler、Streaming、Edge vs Node.js |

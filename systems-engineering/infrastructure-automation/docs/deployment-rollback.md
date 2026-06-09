@@ -350,6 +350,70 @@ Step 4: 后续清理（可选）
   - 生产全量发布需人工确认回滚
 ```
 
+## L2：K8s Deployment Controller 源码与回滚机制
+
+### Deployment Controller 协调循环
+
+```go
+// kubernetes/pkg/controller/deployment/deployment_controller.go:syncDeployment
+func (dc *DeploymentController) syncDeployment(ctx context.Context, key string) error {
+    // 1. 获取 Deployment 对象
+    d, err := dc.dLister.Deployments(namespace).Get(name)
+    
+    // 2. 获取关联的 ReplicaSets
+    rsList, err := dc.getReplicaSetsForDeployment(d)
+    
+    // 3. 获取关联的 Pods
+    podList, err := dc.getPodMapForDeployment(d, rsList)
+    
+    // 4. 核心：计算 scale 策略
+    //    - 如果是滚动更新：根据 maxSurge/maxUnavailable 计算新/旧 RS 的副本数
+    //    - 如果是回滚：将旧的 RS 的 revision 提升为当前，缩容新的 RS
+    
+    // 5. 执行 scale
+    dc.scale(ctx, deployment, newRS, oldRSs)
+    
+    // 6. 清理过旧的 ReplicaSets（保留 revisionHistoryLimit 个，默认 10）
+    dc.cleanupDeployment(oldRSs, deployment)
+}
+```
+
+### 回滚的源码级行为
+
+```go
+// kubernetes/pkg/controller/deployment/rollback.go
+func (dc *DeploymentController) rollback(d *apps.Deployment, rsList []*apps.ReplicaSet) error {
+    // 回滚逻辑：
+    // 1. 找到目标 revision 的 ReplicaSet（从 annotation 中解析 revision）
+    // 2. 将该 RS 的 PodTemplateSpec 复制到 Deployment.Spec.Template
+    // 3. 更新 Deployment → 触发正常的协调循环
+    // 4. 新的协调循环会：缩容当前 RS，扩容旧的 RS
+}
+```
+
+**关键洞察**：`kubectl rollout undo` 不是直接切换 RS，而是**修改 Deployment 的 Template**，让控制器重新协调。这意味着：
+- 回滚速度受 `minReadySeconds` 和 `readinessProbe` 影响
+- 如果旧镜像已被清理（imagePullPolicy: Always + registry 清理），回滚会失败
+
+### 数字锚定：各部署策略的 RTO/RPO
+
+| 策略 | RTO（恢复时间目标） | RPO（数据丢失目标） | 实际观测 |
+|---|---|---|---|
+| Rolling Update | 1-5 分钟（重新拉镜像） | 0（无状态） | 受 image pull + readiness 影响 |
+| Blue/Green | ~5-30 秒（切流量） | 0 | 依赖 LB/Service 切换速度 |
+| Canary | ~10-60 秒（切流量或扩缩） | 0 | 依赖监控判断 + 自动回滚 |
+| 数据库 schema 变更 | 分钟级到小时级 | 可能 > 0 | 不可逆变更需要数据恢复 |
+
+**RTO 差异的根本原因**：
+- Rolling Update 需要重新创建 Pod（拉镜像 + 启动 + readiness），RTO 不可控。
+- Blue/Green 和 Canary 只需要切换流量（修改 Service selector 或 VirtualService weight），RTO 极短。
+
+### 边界陷阱
+
+1. **回滚时旧镜像已被清理**：如果容器 registry 的镜像保留策略是 30 天，而上次发布是 60 天前，回滚会 ImagePullBackOff。建议：关键版本镜像永久保留，或使用 immutable tag。
+2. **ConfigMap/Secret 不回滚**：`kubectl rollout undo` 只回滚 PodTemplateSpec（镜像、命令、资源限制），**不回滚 ConfigMap 和 Secret**。如果 bug 是由配置变更引起的，回滚 Deployment 无效。
+3. **HPA 与手动缩容冲突**：回滚后如果 HPA 正在扩容，可能导致新旧版本同时存在更长时间。
+
 ## 核心追问
 
 1. **蓝绿部署的资源成本怎么接受？** 只在关键服务使用，接受 2x 资源换取秒级回滚；或缩容 Blue 到最小保留（如 1 个实例），牺牲部分回滚速度换成本
@@ -360,10 +424,10 @@ Step 4: 后续清理（可选）
 
 ## 状态
 
-| 资产 | 状态 |
-|---|---|
-| Terraform blueprint | done |
-| GitOps workflow | done |
-| config and secret layering | done |
-| deployment rollback playbook | done |
-| policy as code notes | todo |
+| 资产 | 深度 | 状态 |
+|---|---|---|
+| Terraform blueprint | L1 | done |
+| GitOps workflow | L2 | done |
+| config and secret layering | L1 | done |
+| deployment rollback playbook | **L2** | **done** |
+| policy as code notes | L1 | todo |

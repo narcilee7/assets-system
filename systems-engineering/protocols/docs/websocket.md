@@ -343,6 +343,65 @@ L7 负载均衡（HTTP）：
   - AWS ALB：原生支持
 ```
 
+## L2：帧处理源码与消息可靠性边界
+
+### WebSocket 帧解析源码（Gorilla / nhooyr/websocket）
+
+```go
+// gorilla/websocket/conn.go: readFrame
+func (c *Conn) readFrame() (int, []byte, error) {
+    // 读取 2 字节 header
+    // FIN(1) + RSV(3) + opcode(4) + MASK(1) + payload_len(7)
+    // 如果 payload_len == 126，再读 2 字节扩展长度
+    // 如果 payload_len == 127，再读 8 字节扩展长度
+    // 客户端→服务端必须 mask，服务端验证 MASK=1
+}
+
+// 关键边界：
+// 1. 最大帧大小：默认无限制，但应设置 ReadLimit（防内存耗尽攻击）
+// 2. 分片消息必须按序，中间不能插入控制帧以外的帧
+// 3. Close 帧 payload 最多 125 字节（含 2 字节状态码 + UTF-8 原因）
+```
+
+### 消息送达语义的工程实现
+
+WebSocket 协议本身不提供消息可靠性保证，需要应用层实现：
+
+| 语义 | 实现方式 | 代价 | 适用场景 |
+|---|---|---|---|
+| at-most-once | 发完即忘 | 零 overhead | 实时位置、心跳 |
+| at-least-once | 客户端 ACK + 服务端重发窗口 | 内存存储未 ACK 消息 | 聊天、通知 |
+| exactly-once | 去重 ID + 幂等处理 + 持久化 | 高 overhead | 交易、状态同步 |
+
+**exactly-once 不可免费实现的原因**：
+- 即使加上 ACK，客户端 ACK 可能丢失，服务端会重发。
+- 即使服务端去重，客户端可能在"收到消息"和"发送 ACK"之间崩溃。
+- 唯一解：业务层幂等（同一消息 ID 处理多次结果相同）。
+
+### 百万连接的数字锚定
+
+```
+Go Gorilla WebSocket：
+  - 每个连接：~20-50KB（含 read/write buffer + conn state）
+  - 100 万连接：~20-50GB 内存
+  - 100 万连接 + epoll（非每连接一个 goroutine）：~5-10GB（使用 gnet/nbio）
+
+Node.js ws 库：
+  - 每个连接：~50-100KB（V8 对象开销大）
+  - 100 万连接：~50-100GB
+  - 需要多进程 + 共享存储扩展
+
+Rust tokio-tungstenite：
+  - 每个连接：~10-20KB
+  - 100 万连接：~10-20GB
+```
+
+### 边界陷阱
+
+1. **半开连接检测**：TCP keepalive 默认 2 小时，NAT 防火墙通常 5 分钟超时。如果没有应用层心跳，服务端可能维护大量死连接。
+2. **重连时的消息顺序**：指数退避重连 + 多节点部署时，客户端可能连到新节点，旧节点上的消息队列会丢失。
+3. **MASK 的副作用**：客户端必须 mask 所有帧，增加 CPU 开销（每字节 XOR）。在极高并发场景下，unmasking 可能成为瓶颈。
+
 ## 核心追问
 
 1. **WebSocket 和 SSE 怎么选？** 服务端推送单向用 SSE（更简单、自动重连、基于 HTTP）；双向实时通信用 WebSocket
