@@ -95,7 +95,7 @@ Native 实现
 
 ### Android 实现
 
-```kotlin
+```java
 // android/src/main/java/com/lynx/video/LynxVideoElement.kt
 package com.lynx.video
 
