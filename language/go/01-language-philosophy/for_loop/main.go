@@ -17,4 +17,10 @@ func TestForLoop() {
 			fmt.Println(cpItem)
 		}()
 	}
+
+	for range items {
+		go func() {
+
+		}()
+	}
 }
