@@ -11,6 +11,7 @@
 | Python | `python/` | 对象模型、协议、装饰器、描述符、asyncio | **Part I 8模块 + Part II 7模块 框架已建立**，deep_copy 已完成 |
 | Go | `go/` | 并发、接口组合、系统工程、服务端基础设施 | **Part I 8模块 + Part II 7模块 框架已建立**，01 理论部分较充实 |
 | Java | `java/` | 企业级后端、JVM、Spring 生态、高并发服务 | **Part I 8模块 + Part II 7模块 框架已建立**，待填充代码 |
+| Rust | `rust/` | 内存安全、零成本抽象、显式 async、trait、unsafe 边界 | **seed** 框架已建立，待填充题单 |
 
 ## 统一能力层
 

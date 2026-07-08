@@ -16,6 +16,9 @@
 | Security | `security/` | auth、permission、CSRF、XSS、secret |
 | Testing | `testing/` | 单测、集成测试、契约测试、回归测试 |
 | DevOps | `devops/` | CI、构建、部署、配置、回滚 |
+| Rust | `rust/` | 内存安全 + 零成本抽象的工程化体系：Axum/SQLx/tonic、可观测、FFI/WASM、AI Backend |
+| Go | `go/` | GMP、并发、gRPC、ORM、AI Backend 架构 |
+| Python | `python/` | FastAPI、SQLAlchemy、Celery、LangChain、部署 |
 
 ## 构件资产模板
 

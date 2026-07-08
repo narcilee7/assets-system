@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/seed",
+]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.75"
+license = "MIT"
+authors = ["assets-system contributors"]
+publish = false
+
+[workspace.dependencies]
+# 测试相关
+proptest = "1"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
