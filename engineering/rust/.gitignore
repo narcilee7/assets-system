@@ -1,0 +1,7 @@
+/target
+**/*.rs.bk
+Cargo.lock.bak
+
+# workspace 里当前只有占位 crate，没有可发布的二进制，所以 lock 暂时忽略。
+# 等真正出现对外可发布的 crate 时，把它从这里删掉并提交 Cargo.lock。
+/Cargo.lock
