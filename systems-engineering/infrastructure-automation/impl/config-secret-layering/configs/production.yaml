@@ -1,0 +1,6 @@
+# production.yaml
+server:
+  port: 80 # 覆盖默认值
+
+database:
+  pool_size: 50 # 生产环境更大连接池
