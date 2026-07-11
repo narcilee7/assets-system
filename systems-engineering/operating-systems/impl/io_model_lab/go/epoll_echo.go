@@ -5,13 +5,13 @@ package main
 import (
 	"fmt"
 	"net"
-	"syscall"
+
 	"golang.org/x/sys/unix"
 )
 
 const (
-	port       = "8080"
-	maxEvents  = 1024
+	port      = "8080"
+	maxEvents = 1024
 )
 
 func setNonblocking(fd int) error {

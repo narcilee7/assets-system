@@ -1,0 +1,6 @@
+server:
+  port: 8000
+  timeout: 30s
+
+databse:
+  pool_size: 10

@@ -117,11 +117,11 @@
 int select(int nfds, fd_set *readfds, fd_set *writefds,
            fd_set *exceptfds, struct timeval *timeout);
 
-限制：
-  1. fd 数量限制：FD_SETSIZE = 1024
-  2. 每次调用都要拷贝 fd_set 到内核
-  3. 内核遍历所有 fd 检查就绪状态：O(n)
-  4. 返回后用户态要遍历所有 fd 找到就绪的
+// 限制：
+//   1. fd 数量限制：FD_SETSIZE = 1024
+//   2. 每次调用都要拷贝 fd_set 到内核
+//   3. 内核遍历所有 fd 检查就绪状态：O(n)
+//   4. 返回后用户态要遍历所有 fd 找到就绪的
 ```
 
 ### poll
