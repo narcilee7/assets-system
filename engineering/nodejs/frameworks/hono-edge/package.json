@@ -1,0 +1,22 @@
+{
+  "name": "hono-edge",
+  "version": "1.0.0",
+  "description": "Hono 是一个超轻量、超快速的 Web 框架，专为 Edge Runtime（Cloudflare Workers、Deno Deploy、Vercel Edge）设计。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsx": "^4.23.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.8.0",
+    "hono": "^4.12.29",
+    "zod": "^4.4.3"
+  }
+}

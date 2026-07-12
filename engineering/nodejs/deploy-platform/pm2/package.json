@@ -1,0 +1,13 @@
+{
+  "name": "pm2",
+  "version": "1.0.0",
+  "description": "PM2 是 Node.js 生产环境最常用的进程管理器，提供集群模式、日志切割、监控和自动重启。",
+  "main": "ecosystem.config.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,30 @@
+# .dockerignore —— 把不该进镜像的东西挡在外面
+# 这些文件如果跟着 COPY 进去,会污染镜像、拖慢构建
+
+# 本地依赖(在 builder 阶段重新装,不要带宿主机上的进去)
+node_modules
+npm-debug.log*
+
+# 版本控制 / 编辑器 / OS 垃圾
+.git
+.gitignore
+.DS_Store
+.vscode
+.idea
+
+# 文档和构建产物
+*.md
+LICENSE
+
+# Docker 自身文件(没必要 COPY 进镜像)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# 测试 / 覆盖率
+coverage
+.nyc_output
+
+# 环境变量
+.env
+.env.*
