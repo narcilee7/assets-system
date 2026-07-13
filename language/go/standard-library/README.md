@@ -24,3 +24,4 @@
 | JSON decode validation | `json_validation/` | todo | decoder、schema-like check |
 | io adapter | `io_adapter/` | todo | Reader / Writer |
 
+ 

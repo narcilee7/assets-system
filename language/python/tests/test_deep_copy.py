@@ -1,11 +1,6 @@
-import sys
 import unittest
-from pathlib import Path
 
-
-PYTHON_DIR = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PYTHON_DIR))
-
+import tests.common  # noqa: F401  # inserts training dirs into sys.path
 from object_model.deep_copy import deep_copy
 
 
