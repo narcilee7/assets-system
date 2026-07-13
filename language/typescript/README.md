@@ -31,8 +31,8 @@
 | Concurrency | [`concurrency/`](concurrency/) | Event Loop、Promise、AbortController、Async Iterator、Scheduler |
 | Standard Library | [`standard-library/`](standard-library/) | 手写 Partial、Pick/Omit、Record、Parameters/ReturnType |
 | Engineering Patterns | [`engineering-patterns/`](engineering-patterns/) | Result、EventEmitter、Middleware、Repository、DI |
-| Mini Runtime | [`mini-runtime/`](mini-runtime/) | CPromise、mini Redux、mini Router |
-| Tests | [`tests/`](tests/) | 体系级测试与验证 |
+| Mini Runtime | [`mini-runtime/`](mini-runtime/) | Router、ORM、Agent Runtime、Task Queue、Cache、Scheduler、Pub/Sub、SSE |
+| Interview | [`interview/`](interview/) | EventLoop/V8、TypeScript 类型、Node.js Runtime、Concurrency 深度问答 |
 
 ---
 
@@ -110,7 +110,7 @@ runtime-model/           → 值/引用、原型链、this、Guard、Schema（�
 | 29 | 类型安全事件系统 | `engineering-patterns/typed-event-emitter/` | ready |
 | 30 | 手写 Promise 状态机 | `mini-runtime/cpromise/` | ready |
 | 31 | 手写 Redux + 类型推导 | `mini-runtime/mini-redux/` | todo |
-| 32 | 手写 Router + 参数提取 | `mini-runtime/mini-router/` | todo |
+| 32 | 手写 Router + 参数提取 | `mini-runtime/miniRouter.ts` | ready |
 
 ---
 
@@ -133,11 +133,21 @@ runtime-model/           → 值/引用、原型链、this、Guard、Schema（�
 
 ```bash
 cd language/typescript
-# 运行时测试
-mini-runtime/cpromise/node_modules/.bin/vitest run --config vitest.config.ts
 
-# 类型测试
-cd mini-runtime/cpromise && npx tsc --noEmit ../type-system-gymnastics/*/test.ts
+# 全量运行时测试
+npm test
+
+# 单独运行 cpromise 的 vitest 测试
+cd mini-runtime/cpromise && npx vitest run --config vitest.config.ts
+```
+
+### 面试文档阅读
+
+```text
+interview/eventloop-v8.md
+interview/typescript-types.md
+interview/nodejs-runtime.md
+interview/concurrency.md
 ```
 
 ### 理论体系阅读
@@ -164,5 +174,5 @@ cd mini-runtime/cpromise && npx tsc --noEmit ../type-system-gymnastics/*/test.ts
 | `ready` | 已完成并可运行验证 |
 
 当前状态：
-- **Part I 理论体系**：8 个模块架构已建立，待逐层深化内容
-- **Part II 训练场**：目录与题单已建立，8/32 题已完成，待逐一实现
+- **Part I 理论体系**：8 个模块架构已建立，待逐层深化内容。
+- **Part II 训练场**：`runtime-model`、`core-abstractions`、`standard-library`、`concurrency`、`engineering-patterns`、`mini-runtime` 已补齐代码与测试；`interview/` 已补充 4 份面试深度文档。全量测试通过 `npm test` 验证。
