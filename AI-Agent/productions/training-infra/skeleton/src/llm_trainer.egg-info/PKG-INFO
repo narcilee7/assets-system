@@ -1,0 +1,39 @@
+Metadata-Version: 2.4
+Name: llm-trainer
+Version: 0.1.0
+Summary: LLM/Agent Training Infrastructure Skeleton with Wandb & Weave
+Author-email: Your Name <you@example.com>
+License: MIT
+Keywords: llm,training,wandb,weave,sft,dpo,rlhf
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: <3.14,>=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: torch>=2.5.0
+Requires-Dist: transformers>=4.41.0
+Requires-Dist: datasets>=2.19.0
+Requires-Dist: accelerate>=0.30.0
+Requires-Dist: peft>=0.11.0
+Requires-Dist: trl>=0.9.0
+Requires-Dist: omegaconf>=2.3.0
+Requires-Dist: pydantic>=2.7.0
+Requires-Dist: wandb>=0.17.0
+Requires-Dist: weave>=0.50.0
+Requires-Dist: sentencepiece>=0.2.0
+Requires-Dist: protobuf>=3.20.0
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: tqdm>=4.66.0
+Provides-Extra: deepspeed
+Requires-Dist: deepspeed>=0.14.0; extra == "deepspeed"
+Provides-Extra: flash
+Requires-Dist: flash-attn>=2.5.0; extra == "flash"
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0.0; extra == "dev"
+Requires-Dist: black>=24.0.0; extra == "dev"
+Requires-Dist: ruff>=0.4.0; extra == "dev"
+Requires-Dist: mypy>=1.10.0; extra == "dev"

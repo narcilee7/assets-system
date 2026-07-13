@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-trainer"
+version = "0.1.0"
+description = "LLM/Agent Training Infrastructure Skeleton with Wandb & Weave"
+readme = "README.md"
+requires-python = ">=3.10,<3.14"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "you@example.com"}
+]
+keywords = ["llm", "training", "wandb", "weave", "sft", "dpo", "rlhf"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    "torch>=2.5.0",                     # Python 3.13 support starts at torch 2.5
+    "transformers>=4.41.0",
+    "datasets>=2.19.0",
+    "accelerate>=0.30.0",
+    "peft>=0.11.0",
+    "trl>=0.9.0",
+    "omegaconf>=2.3.0",
+    "pydantic>=2.7.0",
+    "wandb>=0.17.0",
+    "weave>=0.50.0",
+    "sentencepiece>=0.2.0",
+    "protobuf>=3.20.0",
+    "numpy>=1.24.0",
+    "tqdm>=4.66.0",
+]
+
+[project.optional-dependencies]
+deepspeed = ["deepspeed>=0.14.0"]
+flash = ["flash-attn>=2.5.0"]
+# Megatron-LM is not distributed via PyPI; install from source if needed:
+#   pip install git+https://github.com/NVIDIA/Megatron-LM.git
+# megatron = []
+dev = [
+    "pytest>=8.0.0",
+    "black>=24.0.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+]
+
+[project.scripts]
+llm-train = "llm_trainer.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312", "py313"]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "W"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true

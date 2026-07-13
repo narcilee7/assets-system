@@ -22,6 +22,7 @@
 | Domain Modeling | `domain-modeling/` | 领域、实体、值对象、聚合、用例、领域事件 |
 | Architecture Styles | `architecture-styles/` | 分层、Clean Architecture、Hexagonal、DDD、微服务 |
 | API Design | `api-design/` | REST、RPC、GraphQL、Event Contract、版本演进 |
+| Database | `database/` | SQL 场景、索引、事务、性能优化、高可用 |
 | Data Consistency | `data-consistency/` | 事务、幂等、Outbox、Saga、最终一致 |
 | Distributed Systems | `distributed-systems/` | CAP、复制、分片、锁、Leader、消息语义 |
 | Reliability | `reliability/` | timeout、retry、circuit breaker、bulkhead、graceful degradation |
@@ -57,6 +58,7 @@
 | P0 | middleware pipeline | `patterns/middleware-pipeline/` | tested |
 | P0 | retry / timeout / circuit breaker | `reliability/stability-patterns/` | tested |
 | P0 | transaction boundary + idempotency | `data-consistency/transaction-boundary/` | tested |
+| P0 | SQL scenario questions | `database/sql-scenarios/` | done |
 | P0 | service observability baseline | `observability/observability-baseline/` | tested |
 | P1 | layered service blueprint | `architecture-styles/layered-service-blueprint/` | tested |
 | P1 | API design checklist | `api-design/api-design-checklist/` | tested |

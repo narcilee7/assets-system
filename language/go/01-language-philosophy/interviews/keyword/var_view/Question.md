@@ -160,7 +160,7 @@ func main() {
 </details>
 
 ---
-
+****
 ### 题 5：if/for 中的短声明作用域
 
 ```go

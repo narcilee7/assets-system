@@ -1,7 +1,7 @@
 package main
 
 import (
-	"golang.org/x/exp/constraints"
+	"fmt"
 )
 
 // 有类型和无类型
@@ -139,12 +139,12 @@ const (
 // func Max[T comparable](a, b T) T {
 // 	// pass 
 // }
-func Max[T constraints.Ordered](a, b T) T {
-	if a > b {
-		return a
-	}
-	return b
-}
+// func Max[T constraints.Ordered](a, b T) T {
+// 	if a > b {
+// 		return a
+// 	}
+// 	return b
+// }
 
 // const A = 1 << 64          // 合法？
 // const B int = 1 << 64      // 合法？
@@ -182,3 +182,22 @@ const (
 // 	fmt.Println(a, b, c, d) // 1,2,2,3
 // 	fmt.Println(e, f, g, h) // 0,2,4,9
 // }
+
+const (
+	a = 1
+	b
+	c = iota
+	d
+)
+
+const (
+	e = iota // 0
+	f = iota << 1 // 2
+	g
+	h = iota * iota
+)
+
+func main() {
+	fmt.Println(a, b, c, d)
+	fmt.Println(e, f, g, h)
+}

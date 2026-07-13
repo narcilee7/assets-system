@@ -1,0 +1,73 @@
+# Pretrain 阶段配置示例
+# 适用于 7B 级别模型在单机 8×A100 80GB 上进行继续预训练
+
+stage: pretrain
+run_name: pretrain-llama3-8b-continual
+
+model:
+  name_or_path: meta-llama/Meta-Llama-3-8B
+  torch_dtype: bfloat16
+  attn_implementation: flash_attention_2
+  use_lora: false
+
+data:
+  path: data/pretrain/train.jsonl
+  format: jsonl
+  text_column: text
+  max_seq_length: 4096
+  streaming: true
+  batch_size: 4
+  num_workers: 8
+  packing: true
+
+training:
+  output_dir: outputs/pretrain-llama3-8b
+  num_epochs: 1
+  max_steps: 100000
+  learning_rate: 1.0e-4
+  min_lr_ratio: 0.1
+  warmup_steps: 2000
+  lr_scheduler_type: cosine
+  weight_decay: 0.1
+  max_grad_norm: 1.0
+  gradient_accumulation_steps: 8
+  gradient_checkpointing: true
+  mixed_precision: bf16
+  seed: 42
+  logging_steps: 10
+  eval_steps: 500
+  save_steps: 1000
+  save_total_limit: 3
+  dataloader_num_workers: 8
+
+distributed:
+  backend: fsdp
+  world_size: 8
+  local_rank: 0
+  sharding_strategy: FULL_SHARD
+  auto_wrap_policy: TRANSFORMER_BASED_WRAP
+  mixed_precision: bf16
+  backward_prefetch: BACKWARD_PRE
+  cpu_offload: false
+
+wandb:
+  project: llm-agent-train
+  entity: null
+  group: pretrain-llama3-8b
+  tags: ["pretrain", "llama3", "continual"]
+  log_artifacts: true
+
+checkpoint:
+  save_dir: checkpoints/pretrain-llama3-8b
+  upload_to_wandb: true
+  async_upload: true
+  resume_from_checkpoint: null
+
+weave:
+  project: llm-agent-train
+  enabled: false                    # pretrain 阶段通常不开 weave eval
+
+optimizer:
+  name: adamw_torch
+  betas: [0.9, 0.95]
+  eps: 1.0e-8
