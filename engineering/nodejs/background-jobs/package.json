@@ -1,0 +1,23 @@
+{
+  "name": "background-jobs",
+  "version": "1.0.0",
+  "description": "## 生态",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "ioredis": "^5.11.1",
+    "kafkajs": "^2.2.4"
+  }
+}
