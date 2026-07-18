@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Vue 2 生命周期与特性实验场</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
+</head>
+
+<body>
+
+  <div id="app">
+    <h2>{{ message }}</h2>
+    <button @click="updateText">修改文字（测试 $nextTick）</button>
+    <p id="text-dom">当前 DOM 中的文字: {{ domContent }}</p>
+
+    <hr>
+    <button @click="showChild = !showChild">挂载/销毁子组件</button>
+    <child-component v-if="showChild"></child-component>
+  </div>
+
+  <script>
+    // 1. 定义一个子组件，用来观察父子组件嵌套生命周期
+    Vue.component('child-component', {
+      template: '<div style="border: 1px solid green; padding: 10px; margin-top:10px;">我是子组件</div>',
+      beforeCreate() { console.log('--- 子组件 beforeCreate ---'); },
+      created() { console.log('--- 子组件 created ---'); },
+      beforeMount() { console.log('--- 子组件 beforeMount ---'); },
+      mounted() { console.log('--- 子组件 mounted ---'); },
+      beforeDestroy() { console.log('--- 子组件 beforeDestroy ---'); },
+      destroyed() { console.log('--- 子组件 destroyed ---'); }
+    });
+
+    // 2. 初始化父实例
+    const vm = new Vue({
+      el: '#app',
+      data: {
+        message: 'Hello Vue 2!',
+        domContent: '等待获取...',
+        showChild: true
+      },
+      methods: {
+        updateText() {
+          this.message = '数据变了！';
+
+          // 实验：直接获取 DOM 发现还是旧的
+          const textBefore = document.getElementById('app').querySelector('h2').innerText;
+          console.log('直接获取DOM内容：', textBefore);
+
+          // 使用 $nextTick 获取更新后的 DOM
+          this.$nextTick(() => {
+            const textAfter = document.getElementById('app').querySelector('h2').innerText;
+            console.log('$nextTick中获取DOM内容：', textAfter);
+            this.domContent = textAfter;
+          });
+        }
+      },
+      // 父组件生命周期钩子
+      beforeCreate() { console.log('父组件 beforeCreate'); },
+      created() { console.log('父组件 created'); },
+      beforeMount() { console.log('父组件 beforeMount'); },
+      mounted() { console.log('父组件 mounted'); },
+      beforeUpdate() { console.log('父组件 beforeUpdate'); },
+      updated() { console.log('父组件 updated'); }
+    });
+  </script>
+</body>
+
+</html>
