@@ -1,3 +1,31 @@
+function promiseAllInner(arr) {
+  return new Promise((resolve, reject) => {
+    if (!Array.isArray(arr)) {
+      reject(new TypeError('Argument must be an array'))
+      return
+    }
+    if (arr.length === 0) {
+      resolve([])
+      return
+    }
+    let resolvedCount = 0
+    const result = new Array(arr.length)
+    arr.forEach((promise, index) => {
+      Promise.resolve(promise)
+        .then(value => {
+          result[index] = value
+          resolvedCount += 1
+          if (resolvedCount === arr.length) {
+            resolve(result)
+          }
+        })
+        .catch(err => {
+          reject(err)
+        })
+    })
+  })
+}
+
 
 function MyPromiseAll(arr) {
   return new Promise((resolve, reject) => {
