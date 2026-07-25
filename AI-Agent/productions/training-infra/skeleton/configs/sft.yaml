@@ -1,0 +1,87 @@
+# SFT 阶段配置示例
+# 适用于 8B 模型使用 LoRA 进行指令微调
+
+stage: sft
+run_name: sft-llama3-8b-lora-r64
+
+model:
+  name_or_path: meta-llama/Meta-Llama-3-8B
+  torch_dtype: bfloat16
+  attn_implementation: flash_attention_2
+  use_lora: true
+
+lora:
+  r: 64
+  lora_alpha: 16
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+  lora_dropout: 0.05
+  bias: none
+  task_type: CAUSAL_LM
+  use_rslora: false
+
+data:
+  path: data/sft/train.jsonl
+  format: jsonl
+  chat_template: llama3
+  max_seq_length: 2048
+  streaming: false
+  batch_size: 8
+  num_workers: 4
+  packing: false
+  eval_split_ratio: 0.05
+
+training:
+  output_dir: outputs/sft-llama3-8b-lora
+  num_epochs: 3
+  max_steps: -1
+  learning_rate: 2.0e-4
+  warmup_ratio: 0.03
+  lr_scheduler_type: cosine
+  weight_decay: 0.01
+  max_grad_norm: 0.3
+  gradient_accumulation_steps: 4
+  gradient_checkpointing: true
+  mixed_precision: bf16
+  seed: 42
+  logging_steps: 5
+  eval_steps: 100
+  save_steps: 200
+  save_total_limit: 5
+  dataloader_num_workers: 4
+
+distributed:
+  backend: fsdp
+  world_size: 4
+  local_rank: 0
+  sharding_strategy: SHARD_GRAD_OP       # LoRA 通常用 grad-op sharding
+  auto_wrap_policy: TRANSFORMER_BASED_WRAP
+  mixed_precision: bf16
+  cpu_offload: false
+
+wandb:
+  project: llm-agent-train
+  entity: null
+  group: sft-llama3-8b
+  tags: ["sft", "lora", "llama3"]
+  log_artifacts: true
+
+checkpoint:
+  save_dir: checkpoints/sft-llama3-8b-lora
+  upload_to_wandb: true
+  async_upload: true
+  resume_from_checkpoint: null
+
+weave:
+  project: llm-agent-train
+  enabled: true
+  eval_dataset: data/sft/eval.jsonl
+  eval_steps: 200
+  scorers:
+    - perplexity
+    - rouge
+    - llm_judge
+
+optimizer:
+  name: adamw_torch
+  betas: [0.9, 0.999]
+  eps: 1.0e-8

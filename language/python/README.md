@@ -80,35 +80,35 @@ runtime-model/           → 对象模型、深拷贝、名字绑定（写代码
 | 序号 | 题目 | 推荐目录 | 状态 |
 |------|------|---------|------|
 | 1 | 手写 `deep_copy` | `runtime-model/object_model/` | done |
-| 2 | 手写 `flatten` | `runtime-model/object_model/` | todo |
-| 3 | 手写 `dedup` | `runtime-model/object_model/` | todo |
-| 4 | 手写 `group_by` | `runtime-model/object_model/` | todo |
-| 5 | 手写 `chunk` | `runtime-model/object_model/` | todo |
-| 6 | 手写 `range` | `core-abstractions/iterators/` | todo |
-| 7 | 手写 `enumerate` | `core-abstractions/iterators/` | todo |
-| 8 | 手写 `zip` | `core-abstractions/iterators/` | todo |
-| 9 | 手写 `chain` | `core-abstractions/iterators/` | todo |
-| 10 | 手写 `timer` | `core-abstractions/decorators/` | todo |
-| 11 | 手写 `retry` | `core-abstractions/decorators/` | todo |
-| 12 | 手写 `memoize` | `core-abstractions/decorators/` | todo |
-| 13 | 手写 `once` | `core-abstractions/decorators/` | todo |
-| 14 | 手写 `property` | `core-abstractions/descriptors/` | todo |
-| 15 | 手写 `cached_property` | `core-abstractions/descriptors/` | todo |
-| 16 | 手写字段校验描述符 | `core-abstractions/descriptors/` | todo |
-| 17 | 手写简化版 `dataclass` | `core-abstractions/descriptors/` | todo |
-| 18 | 手写 LRU Cache | `standard-library/data_structures/` | todo |
-| 19 | 手写 Trie | `standard-library/data_structures/` | todo |
-| 20 | 手写 Top K | `standard-library/data_structures/` | todo |
-| 21 | 手写二分查找 | `standard-library/data_structures/` | todo |
-| 22 | 手写 BFS / DFS | `standard-library/data_structures/` | todo |
-| 23 | 手写拓扑排序 | `standard-library/data_structures/` | todo |
-| 24 | 手写线程安全计数器 | `concurrency/` | todo |
-| 25 | 手写生产者消费者 | `concurrency/` | todo |
-| 26 | 手写 `bounded_gather` | `concurrency/` | todo |
-| 27 | 手写 async retry | `concurrency/` | todo |
-| 28 | 手写 Event Bus | `engineering-patterns/` | todo |
-| 29 | 手写 Unit of Work | `engineering-patterns/` | todo |
-| 30 | 手写 mini Router / mini FastAPI | `mini-runtime/mini_framework/` | todo |
+| 2 | 手写 `flatten` | `runtime-model/object_model/` | done |
+| 3 | 手写 `dedup` | `runtime-model/object_model/` | done |
+| 4 | 手写 `group_by` | `runtime-model/object_model/` | done |
+| 5 | 手写 `chunk` | `runtime-model/object_model/` | done |
+| 6 | 手写 `range` | `core-abstractions/iterators/` | done |
+| 7 | 手写 `enumerate` | `core-abstractions/iterators/` | done |
+| 8 | 手写 `zip` | `core-abstractions/iterators/` | done |
+| 9 | 手写 `chain` | `core-abstractions/iterators/` | done |
+| 10 | 手写 `timer` | `core-abstractions/decorators/` | done |
+| 11 | 手写 `retry` | `core-abstractions/decorators/` | done |
+| 12 | 手写 `memoize` | `core-abstractions/decorators/` | done |
+| 13 | 手写 `once` | `core-abstractions/decorators/` | done |
+| 14 | 手写 `property` | `core-abstractions/descriptors/` | done |
+| 15 | 手写 `cached_property` | `core-abstractions/descriptors/` | done |
+| 16 | 手写字段校验描述符 | `core-abstractions/descriptors/` | done |
+| 17 | 手写简化版 `dataclass` | `core-abstractions/descriptors/` | done |
+| 18 | 手写 LRU Cache | `standard-library/data_structures/` | done |
+| 19 | 手写 Trie | `standard-library/data_structures/` | done |
+| 20 | 手写 Top K | `standard-library/data_structures/` | done |
+| 21 | 手写二分查找 | `standard-library/data_structures/` | done |
+| 22 | 手写 BFS / DFS | `standard-library/data_structures/` | done |
+| 23 | 手写拓扑排序 | `standard-library/data_structures/` | done |
+| 24 | 手写线程安全计数器 | `concurrency/` | done |
+| 25 | 手写生产者消费者 | `concurrency/` | done |
+| 26 | 手写 `bounded_gather` | `concurrency/` | done |
+| 27 | 手写 async retry | `concurrency/` | done |
+| 28 | 手写 Event Bus | `engineering-patterns/` | done |
+| 29 | 手写 Unit of Work | `engineering-patterns/` | done |
+| 30 | 手写 mini Router / mini FastAPI | `mini-runtime/mini_framework/` | done |
 
 ---
 
@@ -149,5 +149,6 @@ python -m unittest tests.test_deep_copy
 | `done` | 已完成并可运行验证 |
 
 当前状态：
-- **Part I 理论体系**：8 个模块架构已建立，待逐层深化内容
-- **Part II 训练场**：目录与题单已建立，`deep_copy` 已完成，待逐一实现
+- **Part I 理论体系**：8 个模块架构已建立，待逐层深化内容。
+- **Part II 训练场**：核心 30 题已全部实现并附带单测；`mini-runtime` 扩展为 10 个小系统；新增 4 份面试深度问答文档。
+- **面试文档**：`interview/Questions_Object_Model.md`、`interview/Questions_Runtime_and_GIL.md`、`interview/Questions_Type_System.md`、`interview/Questions_Concurrency.md`。

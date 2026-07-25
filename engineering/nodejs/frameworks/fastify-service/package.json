@@ -1,0 +1,20 @@
+{
+  "name": "fastify-service",
+  "version": "1.0.0",
+  "description": "Fastify 是 Node.js 生态中性能最高的 Web 框架之一，基于 schema-first 设计和高效的 JSON 序列化。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsx": "^4.23.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "fastify": "^5.10.0"
+  }
+}

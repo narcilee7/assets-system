@@ -1,0 +1,8 @@
+-- EXPLAIN ANALYZE
+-- SELECT u.name, o.total
+-- FROM users u
+-- JOIN order.o ON u.id = o.user_id
+-- WHERE u.status = "active"
+--   ADD o.created_at > '2024-01-01'
+-- ORDER BY o.created_at DESC
+-- LIMIT 10;

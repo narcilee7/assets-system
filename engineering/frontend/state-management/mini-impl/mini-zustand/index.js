@@ -1,43 +1,37 @@
-function create(createState) {
+const create = (createState) => {
   let state;
   const listeners = new Set();
 
   const setState = (partial, replace) => {
-    const nextState = typeof partial === "function" ? partial(state) : partial;
+    const nextState = typeof partial === 'function' ? partial(state) : partial;
 
     if (!Object.is(nextState, state)) {
-      const previoutState = state;
-      state =
-        (replace ?? typeof nextState !== "object")
-          ? nextState
-          : Object.assign({}, state, nextState);
-
-      listeners.forEach((listener) => listener(state, previoutState));
+      const prevState = state;
+      state = replace ?? typeof nextState !== 'object' ? nextState : Object.assign({}, state, nextState);
+      listeners.forEach(l => l(state, prevState));
     }
-  };
+  }
 
   const getState = () => state;
 
-  const subscribe = (listener) => {
-    listeners.add(listener);
-    return () => {
-      listeners.delete(listener);
-    };
-  };
+  const subscribe = (l) => {
+    listeners.add(l);
+    return () => listeners.delete(l);
+  }
 
-  const desctroy = () => listeners.clear();
+  const destroy = () => listeners.clear();
 
   const api = {
     setState,
     getState,
     subscribe,
-    desctroy,
-  };
+    destroy,
+  }
 
   state = createState(setState, getState, api);
 
   return (selector = getState, equalityFn = Object.is) => {
-    const [, forceUpdate] = React.useReducer((c) => c + 1, 0);
+    const [, forceUpdate] = React.useReducer(c => c + 1, 0);
     const stateRef = React.useRef();
     const selectorRef = React.useRef(selector);
     const equalityFnRef = React.useRef(equalityFn);
@@ -46,7 +40,7 @@ function create(createState) {
     stateRef.current = selectedState;
 
     React.useEffect(() => {
-      const listener = (newState) => {
+      const listenr = (newState) => {
         const newSelected = selectorRef.current(newState);
         if (!equalityFnRef.current(stateRef.current, newSelected)) {
           stateRef.current = newSelected;
@@ -54,10 +48,7 @@ function create(createState) {
         }
       };
 
-      const unsubscribe = subscribe(listener);
-      return unsubscribe;
-    }, []);
-  };
-
-  return selectedState;
+      return subscribe(listenr);
+    }, [])
+  }
 }

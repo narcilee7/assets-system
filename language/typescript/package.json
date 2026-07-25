@@ -1,0 +1,13 @@
+{
+  "name": "@assets/typescript",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --import tsx $(find runtime-model core-abstractions standard-library concurrency engineering-patterns mini-runtime tests -name '*.test.ts' -not -path '*/cpromise/*' 2>/dev/null)",
+    "demo": "tsx"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.19.0"
+  }
+}

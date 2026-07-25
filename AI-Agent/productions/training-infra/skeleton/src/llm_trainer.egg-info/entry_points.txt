@@ -1,0 +1,2 @@
+[console_scripts]
+llm-train = llm_trainer.main:main

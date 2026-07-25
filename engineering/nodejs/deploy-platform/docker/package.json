@@ -1,0 +1,16 @@
+{
+  "name": "docker",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Node.js 的 Docker 镜像需要多层优化：体积小、构建快、安全、分层缓存友好。",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "pino": "^9.5.0"
+  },
+  "author": "",
+  "license": "ISC"
+}

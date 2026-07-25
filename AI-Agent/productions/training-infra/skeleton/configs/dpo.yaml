@@ -1,0 +1,96 @@
+# DPO 阶段配置示例
+# 基于偏好数据直接优化策略模型
+
+stage: dpo
+run_name: dpo-llama3-8b-lora-r64
+
+model:
+  name_or_path: outputs/sft-llama3-8b-lora/checkpoint-final
+  torch_dtype: bfloat16
+  attn_implementation: flash_attention_2
+  use_lora: true
+  load_in_4bit: false
+
+lora:
+  r: 64
+  lora_alpha: 16
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+  lora_dropout: 0.05
+  bias: none
+  task_type: CAUSAL_LM
+
+data:
+  path: data/dpo/train.jsonl
+  format: jsonl
+  chat_template: llama3
+  max_seq_length: 2048
+  streaming: false
+  batch_size: 4
+  num_workers: 4
+  eval_split_ratio: 0.05
+
+training:
+  output_dir: outputs/dpo-llama3-8b-lora
+  num_epochs: 2
+  max_steps: -1
+  learning_rate: 5.0e-5
+  warmup_ratio: 0.1
+  lr_scheduler_type: cosine
+  weight_decay: 0.01
+  max_grad_norm: 0.3
+  gradient_accumulation_steps: 8
+  gradient_checkpointing: true
+  mixed_precision: bf16
+  seed: 42
+  logging_steps: 5
+  eval_steps: 100
+  save_steps: 200
+  save_total_limit: 5
+  dataloader_num_workers: 4
+
+# DPO 专属超参
+dpo:
+  beta: 0.1
+  label_smoothing: 0.0
+  loss_type: sigmoid
+  f_divergence_type: none
+  f_divergence_params: null
+  reference_free: false
+  reference_model: null                 # null 则禁用 reference model（DPO 默认用当前模型）
+
+distributed:
+  backend: fsdp
+  world_size: 4
+  local_rank: 0
+  sharding_strategy: SHARD_GRAD_OP
+  auto_wrap_policy: TRANSFORMER_BASED_WRAP
+  mixed_precision: bf16
+  cpu_offload: false
+
+wandb:
+  project: llm-agent-train
+  entity: null
+  group: dpo-llama3-8b
+  tags: ["dpo", "lora", "llama3", "preference"]
+  log_artifacts: true
+
+checkpoint:
+  save_dir: checkpoints/dpo-llama3-8b-lora
+  upload_to_wandb: true
+  async_upload: true
+  resume_from_checkpoint: null
+
+weave:
+  project: llm-agent-train
+  enabled: true
+  eval_dataset: data/dpo/eval.jsonl
+  eval_steps: 200
+  scorers:
+    - win_rate
+    - chosen_rejected_margin
+    - llm_judge
+
+optimizer:
+  name: adamw_torch
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
