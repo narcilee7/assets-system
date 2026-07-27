@@ -36,10 +36,3 @@
 3. `workLoop(deadline)` 遍历所有 fiber，调用 `performUnitOfWork`
 4. `performUnitOfWork` 做三件事：1) 创建 DOM 2) 收集 children 3) 返回 next fiber
 5. `commitRoot` 遍历 fiber tree，依次挂载 DOM
-
-## 验证方式
-
-```bash
-make run   # 运行骨架
-make test  # 验证 fiber 渲染
-```
