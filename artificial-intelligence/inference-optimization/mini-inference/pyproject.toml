@@ -1,0 +1,19 @@
+[project]
+name = "mini-inference"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "lichen.777", email = "lichen.777@bytedance.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+ "torch",
+]
+
+[project.scripts]
+mini-inference = "mini_inference:main"
+
+[build-system]
+requires = ["uv_build>=0.12.17,<0.13.0"]
+build-backend = "uv_build"
